@@ -16,44 +16,34 @@ simply by marking functions with the `[[clang::realtime]]` attribute.
 
 ## Docker
 
-The fastest way to try RADSan is to pull the pre-built docker image, which has
-RADSan-enabled `clang` (and other `llvm` tooling) readily installed.
+The fastest way to try RealtimeSanitizer is to pull the [pre-built docker
+image](https://hub.docker.com/repository/docker/realtimesanitizer/radsan-clang/),
+which has `clang` (and other `llvm` tooling) with RADSan readily installed.
 
 ```sh
-docker pull realtime-sanitizer/radsan
+docker pull realtimesanitizer/radsan-clang
 ```
 
 You can experiment in your own repository simply by using Docker's
 shared-volume feature:
 
 ```sh
-docker run -v $(pwd):/my_repo -it realtime-sanitizer/radsan /bin/bash
+docker run -v $(pwd):/my_repo -it realtimesanitizer/radsan-clang /bin/bash
 ```
 
-followed by:
-
-```sh
-cd /my_repo
-mkdir build_radsan
-cmake ..
-```
-
-Alternatively, you may prefer to use the RADSan docker image as a parent image for your own:
+which mounts the host's current working directory at path `/my_repo` in the
+container. Alternatively, you may prefer to use the RADSan docker image as a
+parent image for your own development or CI environment:
 
 ```Dockerfile
-FROM realtime-sanitizer/radsan:latest
+FROM realtimesanitizer/radsan-clang:latest
 RUN apt-get update && apt-get install -y git cmake vim
 ```
 
-## Linux
+## Linux & macOS
 
-Sorry, pre-built binaries for Linux are not yet available for download. Please
-see the "Building from source" section below for instructions.
-
-## macOS
-
-Sorry, pre-built binaries for macOS are not yet available for download. Please
-see the "Building from source" section below for instructions.
+Pre-built binaries for Linux and macOS are not yet available for download.
+Please see the "Building from source" section below for instructions.
 
 ## Windows
 
@@ -63,12 +53,12 @@ you're interested.
 
 # Using it
 
-RADSan is a forked version of `clang` and a lightweight dynamic library, that
-together allow instrumentation of realtime algorithms at a granularity chosen
-by the user. Using it is very simple, requiring only two actions:
+Using RealtimeSanitizer it is very simple, requiring only two actions:
 
 1. mark a real-time function with the `[[clang::realtime]]` attribute, and
 2. add `-fsanitize=realtime` to your compile and link flags.
+
+More details can be found below.
 
 ## Real-time function attribute
 
