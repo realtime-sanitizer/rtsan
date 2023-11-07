@@ -20,23 +20,29 @@ The fastest way to try RADSan is to pull the pre-built docker image, which has
 RADSan-enabled `clang` (and other `llvm` tooling) readily installed.
 
 ```sh
-$ docker pull realtime-sanitizer/radsan
+docker pull realtime-sanitizer/radsan
 ```
 
 You can experiment in your own repository simply by using Docker's
-shared-volumes feature:
+shared-volume feature:
 
 ```sh
-(/path/to/my_repo) $ docker run -v $(pwd):/my_repo -it realtime-sanitizer/radsan /bin/bash
-root@abcdef012345:/# cd /my_repo
-root@abcdef012345:/# mkdir build_radsan // etc.
+docker run -v $(pwd):/my_repo -it realtime-sanitizer/radsan /bin/bash
+```
+
+followed by:
+
+```sh
+cd /my_repo
+mkdir build_radsan
+cmake ..
 ```
 
 Alternatively, you may prefer to use the RADSan docker image as a parent image for your own:
 
 ```Dockerfile
 FROM realtime-sanitizer/radsan:latest
-RUN apt-get update && apt-get install -y git cmake vim // etc.
+RUN apt-get update && apt-get install -y git cmake vim
 ```
 
 ## Linux
@@ -82,7 +88,7 @@ To activate RADSan, pass the flag `-fsanitize=realtime` to clang for compiling
 and linking:
 
 ```sh
-$ clang -fsanitize=realtime main.cpp
+clang -fsanitize=realtime main.cpp
 ```
 
 ## Results
@@ -90,7 +96,7 @@ $ clang -fsanitize=realtime main.cpp
 At run-time, RADSan presents detected realtime violations with a helpful stack trace:
 
 ```
-$ ./a.out
+./a.out
 Intercepted call to realtime-unsafe function `malloc` from realtime context! Stack trace
     #0 0x5644f383d78a in radsan::printStackTrace() /llvm-project/compiler-rt/lib/radsan/radsan_stack.cpp:36:5
     #1 0x5644f383d630 in radsan::Context::printDiagnostics(char const*) /llvm-project/compiler-rt/lib/radsan/radsan_context.cpp:37:3
@@ -121,13 +127,13 @@ use it by either:
 1. setting the `CC` and `CXX` environment variables,
 
 ```sh
-$ CC=/path/to/built/clang CXX=/path/to/built/clang++ cmake ..
+CC=/path/to/built/clang CXX=/path/to/built/clang++ cmake ..
 ```
 
 2. passing the `CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER` options to cmake
 
 ```sh
-$ cmake -DCMAKE_CXX_COMPILER=/path/to/built/clang++ ..
+cmake -DCMAKE_CXX_COMPILER=/path/to/built/clang++ ..
 ```
 
 3. or using `set(CMAKE_CXX_COMPILER ...)` in your CMake project file.
@@ -186,20 +192,20 @@ time to build. To minimise this build time, we recommend using the `ninja`
 build system, and configuring with the following CMake settings:
 
 ```sh
-$ cd llvm-project
-$ mkdir build && cd build
-$ cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
-     -DBUILD_SHARED_LIBS=ON \
-     -DLLVM_ENABLE_PROJECTS="clang;compiler-rt" \
-     -DLLVM_TARGETS_TO_BUILD=Native \
-     ../llvm
-$ ninja -j8 clang compiler-rt llvm-symbolizer
+cd llvm-project
+mkdir build && cd build
+cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
+   -DBUILD_SHARED_LIBS=ON \
+   -DLLVM_ENABLE_PROJECTS="clang;compiler-rt" \
+   -DLLVM_TARGETS_TO_BUILD=Native \
+   ../llvm
+ninja -j8 clang compiler-rt llvm-symbolizer
 ```
 
 If built successfully, `clang` should have appeared inside the `bin/` folder,
 and the radsan dynamic library should be in `lib/`:
 
-```sh
+```
 $ find lib | grep radsan
 lib/clang/18/lib/darwin/libclang_rt.radsan_osx_dynamic.dylib
 $ find bin | grep clang
@@ -216,7 +222,7 @@ bin/clang-18
 Building the docker image locally is straightforward:
 
 ```sh
-(radsan) $ docker build -t radsan -f docker/Dockerfile .
+docker build -t radsan -f docker/Dockerfile .
 ```
 
 # Contact
