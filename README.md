@@ -233,8 +233,3 @@ For all comments, suggestions and queries, please contact us by:
 
 1. joining the [Discord server](https://discord.gg/UMkhAxU9), or
 2. sending an email to realtime.sanitizer@gmail.com.
-
-# Stuff
-
-A realtime context is established automatically at the entrypoint of a
-`[[clang::realtime]]` function, and torn down at the corresponding exit.
