@@ -153,14 +153,13 @@ add_link_options(-fsanitize=realtime)
 
 ### Error modes
 
-On detection of realtime violations, RADSan can be configured to either:
+RADSan's behaviour realtime violations can be configured using the `RADSAN_ERROR_MODE`
+environment variable. RADSan recognises any of the following values for `RADSAN_ERROR_MODE`:
 
-1. Exit (with a failure return code),
-2. Pause and wait for user instruction,
-3. Print the error and continue, or
-4. Log the error to file.
+1. `exit` (RADSan will immediately exit with a failure code),
+2. `continue` (RADSan will print errors and continue), or
+3. `interactive` (RADSan will wait for your instruction at the command line)
 
-TODO details...
 
 ### Choice of symbolizer
 
