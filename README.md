@@ -170,7 +170,31 @@ by setting the envionment variable `RADSAN_SYMBOLIZER_PATH` at run-time.
 
 # How it works
 
-TODO
+Radsan contains a submodule of an `llvm` fork that contains 2 main areas of new functionality:
+
+- Changes to the clang compiler front end that:
+
+    - check for `fsanitize=realtime` as a compiler flag,
+    - look for functions marked with the `[[clang::runtime]]` function attribute,
+    - insert calls to `radsan_realtime_enter()` & `radsan_realtime_exit()` at 
+      the start and end of each of these realtime functions, which are used by the 
+      radsan library (described below), to keep track of whether we are inside
+      a realtime context or not.
+
+- `radsan` library
+
+    - This library links to your application at run time and contains 2 main functional areas:
+        - `radsan::Context`: which is used to maintain whether we are in a "real-time" context and handle any errors 
+        -  The `INTERCEPTOR`s, which are used to intercept calls to the system library at runtime.
+            It uses interceptors from llvm's `compiler-rt` library and contains an interceptor
+            for each function we want to intecept. They all follow the same pattern: check if we're in a realtime context, if not, then call the "real" function, if it is, then handle the error
+
+      ```cpp
+      INTERCEPTOR(void *, malloc, SIZE_T size) {
+        radsan::exitIfRealtime("malloc");
+        return REAL(malloc)(size);
+      }
+      ```
 
 # Building from source
 
