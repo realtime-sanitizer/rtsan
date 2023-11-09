@@ -1,69 +1,23 @@
 # Realtime Sanitizer
 
-RealtimeSanitizer (a.k.a. RADSan) is a realtime-safety testing tool for C and
-C++ projects. RADSan can be used to detect *realtime violations*, i.e. calls to
-any method that is not safe for use with deterministic runtime requirements.
+RealtimeSanitizer (a.k.a. RADSan) is a real-time safety testing tool for C and
+C++ projects. RADSan can be used to detect *real-time violations*, i.e. calls
+to methods that are not safe for use in functions with deterministic runtime
+requirements.
 
 RADSan is a customised version of `clang` and, like other popular sanitizers, a
 lightweight dynamic library that can detect real-time unsafe system calls.
 Calls to functions such as `malloc`, `free` and `pthread_mutex_lock` (along
 with anything else RADSan believes may have a nondeterministic execution time)
-will cause RADSan to error, but only if they are called within a realtime
-context, as defined by the user. Realtime contexts are defined by the user
+will cause RADSan to error, but only if they are called within a real-time
+context, as defined by the user. Real-time contexts are defined by the user
 simply by marking functions with the `[[clang::realtime]]` attribute.
 
-# Getting it
+# Usage
 
-## Docker
+Using RealtimeSanitizer requires only two actions:
 
-The fastest way to try RealtimeSanitizer is to pull the [pre-built docker
-image](https://hub.docker.com/repository/docker/realtimesanitizer/radsan-clang/),
-which has `clang` (and other `llvm` tooling) with RADSan readily installed.
-
-```sh
-docker pull realtimesanitizer/radsan-clang
-```
-
-You can experiment in your own repository simply by using Docker's
-shared-volume feature:
-
-```sh
-docker run -v $(pwd):/my_repo -it realtimesanitizer/radsan-clang /bin/bash
-```
-
-which mounts the host's current working directory at path `/my_repo` in the
-container. Alternatively, you may prefer to use the RADSan docker image as a
-parent image for your own development or CI environment:
-
-```Dockerfile
-FROM realtimesanitizer/radsan-clang:latest
-RUN apt-get update && apt-get install -y git cmake vim
-```
-
-## Linux & macOS
-
-Pre-built binaries for Linux and macOS are not yet available for download.
-Please see the "Building from source" section below for instructions.
-
-## Windows
-
-Apologies, RealtimeSanitizer does not yet support Windows. We very much welcome
-contributions, so please contact us (details at the bottom of this README) if
-you're interested.
-
-# Using it
-
-Using RealtimeSanitizer it is very simple, requiring only two actions:
-
-1. mark a real-time function with the `[[clang::realtime]]` attribute, and
-2. add `-fsanitize=realtime` to your compile and link flags.
-
-More details can be found below.
-
-## Real-time function attribute
-
-Any function can be marked as having real-time
-requirements with the `[[clang::realtime]]` attribute:
+1. mark a real-time function with the `[[clang::realtime]]` attribute:
 
 ```cpp
 [[clang::realtime]] void process (processing_data const & data)
@@ -72,22 +26,17 @@ requirements with the `[[clang::realtime]]` attribute:
 }
 ```
 
-## Compile and link flags
-
-To activate RADSan, pass the flag `-fsanitize=realtime` to clang for compiling
-and linking:
+2. add `-fsanitize=realtime` to your compile and link flags:
 
 ```sh
 clang -fsanitize=realtime main.cpp
 ```
 
-## Results
-
-At run-time, RADSan presents detected realtime violations with a helpful stack trace:
+At run-time, RADSan presents detected real-time violations with a helpful stack trace:
 
 ```
 ./a.out
-Intercepted call to realtime-unsafe function `malloc` from realtime context! Stack trace
+Real-time violation: intercepted call to real-time unsafe function `malloc` in real-time context! Stack trace:
     #0 0x5644f383d78a in radsan::printStackTrace() /llvm-project/compiler-rt/lib/radsan/radsan_stack.cpp:36:5
     #1 0x5644f383d630 in radsan::Context::printDiagnostics(char const*) /llvm-project/compiler-rt/lib/radsan/radsan_context.cpp:37:3
     #2 0x5644f383d5d5 in radsan::Context::exitIfRealtime(char const*) /llvm-project/compiler-rt/lib/radsan/radsan_context.cpp:24:5
@@ -107,12 +56,60 @@ Intercepted call to realtime-unsafe function `malloc` from realtime context! Sta
     #16 0x5644f383d4a4 in _start (/root/test/a.out+0x64a4)
 ```
 
+## Configuration
+
+### Error modes (interactive)
+
+RADSan's behaviour during real-time violations can be configured using the `RADSAN_ERROR_MODE`
+environment variable. RADSan recognises any of the following values for `RADSAN_ERROR_MODE`:
+
+1. `exit` (RADSan will immediately exit with a failure code on the first violation),
+2. `continue` (RADSan will print errors and continue), or
+3. `interactive` (RADSan will wait for your instruction at the command line):
+```sh
+> RADSAN_ERROR_MODE=interactive ./my_executable
+
+Real-time violation: intercepted call to real-time unsafe function `malloc` in real-time context! Stack trace:
+    #0 0x5644f383d78a in radsan::printStackTrace() /llvm-project/compiler-rt/lib/radsan/radsan_stack.cpp:36:5
+    #1 0x5644f383d630 in radsan::Context::printDiagnostics(char const*) /llvm-project/compiler-rt/lib/radsan/radsan_context.cpp:37:3
+    ... (etc)
+
+Continue? (Y/n):
+```
+
+The default configuration is `RADSAN_ERROR_MODE=exit`.
+
+## Disabling RADSan
+
+You might find a case where you disagree with RADSan's assessment of real-time
+safety. Consider the case of locking and unlocking a mutex; these operations
+can block if the mutex is contested, and common advice is to avoid them in
+real-time contexts. However, it can be argued that their use is safe under
+certain special constraints, like if the mutex is never contested (you might be
+re-using multi-threaded code in a single-threaded context), or if it's only
+contested at times when a user is expecting a glitch anyway (if, say, an audio
+device is disconnected). RADSan always assumes the worst, and this may not be
+true for your particular use case. You can turn off RADSan's error detection
+temporarily by wrapping code in `radsan_off()` and `radsan_on()` as follows:
+
+```cpp
+#include "radsan.h" // (found in llvm-project/compiler-rt/lib/radsan)
+
+[[clang::realtime]] float process (float x)
+{
+    auto const y = 2.0f * x;
+
+    radsan_off();
+    i_know_this_method_is_realtime_safe_but_radsan_complains_about_it();
+    radsan_on();
+}
+```
+
 ## CMake
 
-If you're using the RADSan Docker image, CMake will automatically detect
-RADSan-enabled clang as the C/C++ compiler because it is installed in the
-system path. If you've built it from source, you'll need to instruct CMake to
-use it by either:
+RADSan-enabled clang is installed to `/usr/local` in the RADSan Docker image,
+and CMake will automatically detect it. However, if you've built RADSan from
+source, you'll need to instruct CMake to use it by either:
 
 1. setting the `CC` and `CXX` environment variables,
 
@@ -141,31 +138,58 @@ target_compile_options(MyTarget PUBLIC -fsanitize=realtime)
 target_link_options(MyTarget PUBLIC -fsanitize=realtime)
 ```
 
-For your entire project globally, add the following early in your CMake project
-file:
+or add the following to configure all targets in the project:
 
 ```cmake
 add_compile_options(-fsanitize=realtime)
 add_link_options(-fsanitize=realtime)
 ```
 
-## Configuration
-
-### Error modes
-
-RADSan's behaviour realtime violations can be configured using the `RADSAN_ERROR_MODE`
-environment variable. RADSan recognises any of the following values for `RADSAN_ERROR_MODE`:
-
-1. `exit` (RADSan will immediately exit with a failure code),
-2. `continue` (RADSan will print errors and continue), or
-3. `interactive` (RADSan will wait for your instruction at the command line)
-
-
 ### Choice of symbolizer
 
 By default, RADSan uses the installed `llvm-symbolizer` to symbolise the stack
 trace. If you prefer a different symboliser, you can configure RADSan to use it
 by setting the envionment variable `RADSAN_SYMBOLIZER_PATH` at run-time.
+
+
+# Getting it
+
+## Docker
+
+The fastest way to try RealtimeSanitizer is to pull the [pre-built docker
+image](https://hub.docker.com/repository/docker/realtimesanitizer/radsan-clang/),
+which has `clang` (and other `llvm` tooling) with RADSan readily installed.
+
+```sh
+docker pull realtimesanitizer/radsan-clang
+```
+
+You can experiment in your own repository simply by using Docker's
+shared-volume feature:
+
+```sh
+docker run -v $(pwd):/my_repo -it realtimesanitizer/radsan-clang /bin/bash
+```
+
+which mounts the host's current working directory at path `/my_repo` in the
+container. Alternatively, you may prefer to use the RADSan Docker image as a
+parent image for your own development or CI environment:
+
+```Dockerfile
+FROM realtimesanitizer/radsan-clang:latest
+RUN apt-get update && apt-get install -y git cmake vim
+```
+
+## Linux & macOS
+
+Pre-built binaries for Linux and macOS are not yet available for download.
+Please see the "Building from source" section below for instructions.
+
+## Windows
+
+Apologies, RealtimeSanitizer does not yet support Windows. We very much welcome
+contributions, so please contact us (details at the bottom of this README) if
+you're interested.
 
 # How it works
 
@@ -175,18 +199,18 @@ Radsan contains a submodule with a fork of the `llvm-project`. This fork contain
 
     - check for `-fsanitize=realtime` as a compiler flag,
     - look for functions marked with the `[[clang::runtime]]` function attribute,
-    - insert calls to `radsan_realtime_enter()` & `radsan_realtime_exit()` at 
-      the start and end of each of these realtime functions, which are used by the 
+    - insert calls to `radsan_realtime_enter()` & `radsan_realtime_exit()` at
+      the start and end of each of these realtime functions, which are used by the
       radsan library (described below), to keep track of whether we are inside
       a realtime context or not.
 
 - `radsan` library
 
     - This library links to your application at run time and contains 2 main functional areas:
-        - `radsan::Context`: which is used to maintain whether we are in a "real-time" context and handle any errors 
+        - `radsan::Context`: which is used to maintain whether we are in a "real-time" context and handle any errors
         -  The `INTERCEPTOR`s, which are used to intercept calls to the system library at runtime.
             It uses interceptors from llvm's `compiler-rt` library and contains an interceptor
-            for each function we want to intercept. They all follow the same pattern: check if we're in a realtime context, if not, then call the "real" function, if it is, then handle the error
+            for each function we want to intercept. They all follow the same pattern: check if we're in a real-time context, if not, then call the "real" function, if it is, then handle the error
 
       ```cpp
       INTERCEPTOR(void *, malloc, SIZE_T size) {
@@ -207,7 +231,8 @@ build system, and configuring with the following CMake settings:
 ```sh
 cd llvm-project
 mkdir build && cd build
-cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
+cmake -G Ninja \
+   -DCMAKE_BUILD_TYPE=Release \
    -DBUILD_SHARED_LIBS=ON \
    -DLLVM_ENABLE_PROJECTS="clang;compiler-rt" \
    -DLLVM_TARGETS_TO_BUILD=Native \
@@ -219,20 +244,20 @@ If built successfully, `clang` should have appeared inside the `bin/` folder,
 and the radsan dynamic library should be in `lib/`:
 
 ```
-$ find lib | grep radsan
-lib/clang/18/lib/darwin/libclang_rt.radsan_osx_dynamic.dylib
-$ find bin | grep clang
+> find bin | grep clang
 bin/clang
 bin/clang-tblgen
 bin/clang-cl
 bin/clang++
 bin/clang-cpp
 bin/clang-18
+> find lib | grep radsan
+lib/clang/18/lib/darwin/libclang_rt.radsan_osx_dynamic.dylib
 ```
 
-## RADSan docker image
+## RADSan Docker image
 
-Building the docker image locally is straightforward:
+Building the Docker image locally is straightforward:
 
 ```sh
 docker build -t radsan -f docker/Dockerfile .
