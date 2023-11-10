@@ -13,6 +13,19 @@ will cause RADSan to error, but only if they are called within a real-time
 context, as defined by the user. Real-time contexts are defined by the user
 simply by marking functions with the `[[clang::realtime]]` attribute.
 
+# Table Of Contents
+
+1. [Usage](#usage)
+2. [Getting RADSan](#getting-radsan)
+3. [CMake](#cmake)
+4. [Configuration](#configuration)
+  - [Error Modes](#error-modes)
+  - [Disabling RADSan](#disabling-radsan)
+  - [Choice of symbolizer](#choice-of-symbolizer)
+5. [How it works](#how-it-works)
+6. [Building from source](#building-from-source)
+7. [Contact](#contact)
+
 # Usage
 
 Using RealtimeSanitizer requires only two actions:
@@ -56,9 +69,87 @@ Real-time violation: intercepted call to real-time unsafe function `malloc` in r
     #16 0x5644f383d4a4 in _start (/root/test/a.out+0x64a4)
 ```
 
-## Configuration
+# Getting RADSan
 
-### Error modes (interactive)
+## Docker
+
+The fastest way to try RealtimeSanitizer is to pull the [pre-built docker
+image](https://hub.docker.com/repository/docker/realtimesanitizer/radsan-clang/),
+which has `clang` (and other `llvm` tooling) with RADSan readily installed.
+
+```sh
+docker pull realtimesanitizer/radsan-clang
+```
+
+You can quickly experiment in your own repository using a shared-volume:
+
+```sh
+docker run -v $(pwd):/my_repo -it realtimesanitizer/radsan-clang /bin/bash
+```
+
+which mounts the host's current working directory at path `/my_repo` in the
+container. Alternatively, you may prefer to use the RADSan Docker image as a
+parent image for your own development or CI environment:
+
+```Dockerfile
+FROM realtimesanitizer/radsan-clang:latest
+RUN apt-get update && apt-get install -y git cmake vim
+```
+
+## Linux & macOS
+
+Pre-built binaries for Linux and macOS are not yet available for download.
+Please see the "Building from source" section below for instructions.
+
+## Windows
+
+Apologies, RealtimeSanitizer does not yet support Windows. We very much welcome
+contributions, so please contact us (details at the bottom of this README) if
+you're interested.
+
+# CMake
+
+RADSan-enabled clang is installed to `/usr/local` in the RADSan Docker image,
+and CMake will automatically detect it. However, if you've built RADSan from
+source, you'll need to instruct CMake to use it by either:
+
+1. setting the `CC` and `CXX` environment variables,
+
+```sh
+CC=/path/to/built/clang CXX=/path/to/built/clang++ cmake ..
+```
+
+2. passing the `CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER` options to cmake
+
+```sh
+cmake -DCMAKE_CXX_COMPILER=/path/to/built/clang++ ..
+```
+
+3. or using `set(CMAKE_CXX_COMPILER ...)` in your CMake project file.
+
+
+```cmake
+set(CMAKE_CXX_COMPILER /path/to/built/clang++)
+```
+
+Adding the compiler flag `-fsanitize=realtime` can be done however works best
+for your project. Individual targets can be configured with:
+
+```cmake
+target_compile_options(MyTarget PUBLIC -fsanitize=realtime)
+target_link_options(MyTarget PUBLIC -fsanitize=realtime)
+```
+
+or add the following to configure all targets in the project:
+
+```cmake
+add_compile_options(-fsanitize=realtime)
+add_link_options(-fsanitize=realtime)
+```
+
+# Configuration
+
+## Error modes
 
 RADSan's behaviour during real-time violations can be configured using the `RADSAN_ERROR_MODE`
 environment variable. RADSan recognises any of the following values for `RADSAN_ERROR_MODE`:
@@ -105,91 +196,12 @@ temporarily by wrapping code in `radsan_off()` and `radsan_on()` as follows:
 }
 ```
 
-## CMake
-
-RADSan-enabled clang is installed to `/usr/local` in the RADSan Docker image,
-and CMake will automatically detect it. However, if you've built RADSan from
-source, you'll need to instruct CMake to use it by either:
-
-1. setting the `CC` and `CXX` environment variables,
-
-```sh
-CC=/path/to/built/clang CXX=/path/to/built/clang++ cmake ..
-```
-
-2. passing the `CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER` options to cmake
-
-```sh
-cmake -DCMAKE_CXX_COMPILER=/path/to/built/clang++ ..
-```
-
-3. or using `set(CMAKE_CXX_COMPILER ...)` in your CMake project file.
-
-
-```cmake
-set(CMAKE_CXX_COMPILER /path/to/built/clang++)
-```
-
-Adding the compiler flag `-fsanitize=realtime` can be done however works best
-for your project. Individual targets can be configured with:
-
-```cmake
-target_compile_options(MyTarget PUBLIC -fsanitize=realtime)
-target_link_options(MyTarget PUBLIC -fsanitize=realtime)
-```
-
-or add the following to configure all targets in the project:
-
-```cmake
-add_compile_options(-fsanitize=realtime)
-add_link_options(-fsanitize=realtime)
-```
-
-### Choice of symbolizer
+## Choice of symbolizer
 
 By default, RADSan uses the installed `llvm-symbolizer` to symbolise the stack
 trace. If you prefer a different symboliser, you can configure RADSan to use it
 by setting the envionment variable `RADSAN_SYMBOLIZER_PATH` at run-time.
 
-
-# Getting it
-
-## Docker
-
-The fastest way to try RealtimeSanitizer is to pull the [pre-built docker
-image](https://hub.docker.com/repository/docker/realtimesanitizer/radsan-clang/),
-which has `clang` (and other `llvm` tooling) with RADSan readily installed.
-
-```sh
-docker pull realtimesanitizer/radsan-clang
-```
-
-You can experiment in your own repository simply by using Docker's
-shared-volume feature:
-
-```sh
-docker run -v $(pwd):/my_repo -it realtimesanitizer/radsan-clang /bin/bash
-```
-
-which mounts the host's current working directory at path `/my_repo` in the
-container. Alternatively, you may prefer to use the RADSan Docker image as a
-parent image for your own development or CI environment:
-
-```Dockerfile
-FROM realtimesanitizer/radsan-clang:latest
-RUN apt-get update && apt-get install -y git cmake vim
-```
-
-## Linux & macOS
-
-Pre-built binaries for Linux and macOS are not yet available for download.
-Please see the "Building from source" section below for instructions.
-
-## Windows
-
-Apologies, RealtimeSanitizer does not yet support Windows. We very much welcome
-contributions, so please contact us (details at the bottom of this README) if
-you're interested.
 
 # How it works
 
