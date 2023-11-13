@@ -6,14 +6,14 @@ struct Coords {
   double y{};
 };
 
-[[clang::realtime]] float process() {
+[[clang::realtime]] double process() {
   std::atomic<Coords> coords;
-
-  coords.store({4.1f, 4.4f});
+  coords.store({4.1, 4.4});
   return coords.load().x;
 }
 
 int main() {
   std::cout << "I should pass!\n";
-  return process();
+  process();
+  return 0;
 }

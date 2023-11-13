@@ -7,6 +7,6 @@
 }
 
 int main() {
-  std::cout << "I should pass!\n";
+  std::cout << "I should fail!\n";
   return process();
 }

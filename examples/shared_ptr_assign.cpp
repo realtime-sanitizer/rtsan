@@ -1,17 +1,12 @@
 #include <memory>
 #include <iostream>
 
-std::shared_ptr<int> ptr_to_int = std::make_shared<int> (3);
+std::shared_ptr<int> ptr_to_int = std::make_shared<int>(3);
 
-std::shared_ptr<int> mutate(std::shared_ptr<int> ptr) {
-  auto new_ptr = ptr;
+[[clang::realtime]] int process() {
+  auto new_ptr = ptr_to_int;
   (*new_ptr)++;
-  return new_ptr;
-}
-
-[[clang::realtime]] float process() {
-  mutate(ptr_to_int);
-  return *ptr_to_int;
+  return *new_ptr;
 }
 
 int main() {

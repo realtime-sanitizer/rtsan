@@ -1,13 +1,11 @@
 #include <functional>
 #include <iostream>
 
-float invoke(std::function<float()> func) { return func(); }
+float invoke(std::function<float()> &&func) { return func(); }
 
 [[clang::realtime]] float process() {
   auto data = std::array<float, 3>{};
-  auto func = [data]() { return data[3]; };
-
-  return invoke(func);
+  return invoke([data]() { return data[2]; });
 }
 
 int main() {
