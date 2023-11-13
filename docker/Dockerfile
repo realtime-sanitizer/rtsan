@@ -1,3 +1,10 @@
+#
+#    This file is part of the RealtimeSanitizer (RADSan) project.
+#    https://github.com/realtime-sanitizer/radsan
+#
+#    Copyright 2023 David Trevelyan & Alistair Barker
+#    Subject to GNU General Public License (GPL) v3.0
+#
 FROM ubuntu:22.04 AS build
 RUN apt-get update && apt-get install -y clang cmake
 COPY llvm-project llvm-project
