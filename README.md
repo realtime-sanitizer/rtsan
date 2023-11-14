@@ -281,5 +281,5 @@ RealtimeSanitizer was developed by David Trevelyan and Ali Barker. We welcome
 contributions to make this tool more helpful to a wider group of developers.
 For all comments, suggestions and queries, please contact us by:
 
-1. joining the [Discord server](https://discord.gg/UMkhAxU9), or
+1. joining the [Discord server](https://discord.gg/DZqjbmSZzZ), or
 2. sending an email to realtime.sanitizer@gmail.com.
