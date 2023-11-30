@@ -1,3 +1,5 @@
 [submodule "llvm-project"]
-	path = llvm-project
-	url = https://github.com/realtime-sanitizer/llvm-project.git 
+    path = llvm-project
+    url = https://github.com/realtime-sanitizer/llvm-project.git 
+    branch = radsan
+
