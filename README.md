@@ -24,7 +24,8 @@ simply by marking functions with the `[[clang::realtime]]` attribute.
     3. [Choice of symbolizer](#choice-of-symbolizer)
 5. [How it works](#how-it-works)
 6. [Building from source](#building-from-source)
-7. [Contact](#contact)
+7. [Running the tests](#running-the-tests)
+8. [Contact](#contact)
 
 # Usage
 
@@ -273,6 +274,22 @@ Building the Docker image locally is straightforward:
 
 ```sh
 docker build -t radsan -f docker/Dockerfile .
+```
+
+# Running the tests
+
+RADSan follows the existing sanitizer testing patterns, and adds two new test
+targets to the compiler-rt project for each architecture `arch`:
+
+1. `TRadsan-${arch}-Test` (which is instrumented by RADSan), and
+2. `TRadsan-${arch}-NoInstTest` (which are unit tests that do not need the RADSan instrumentation)
+
+Here's an example script for running the RADSan tests in isolation on `arm64`
+architecture. From your build folder in llvm-project:
+
+```sh
+ninja TRadsan-arm64-Test && ./projects/compiler-rt/lib/radsan/tests/Radsan-arm64-Test
+ninja TRadsan-arm64-NoInstTest && ./projects/compiler-rt/lib/radsan/tests/Radsan-arm64-NoInstTest
 ```
 
 # Contact
