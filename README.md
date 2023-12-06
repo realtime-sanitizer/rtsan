@@ -15,23 +15,97 @@ simply by marking functions with the `[[clang::realtime]]` attribute.
 
 # Table Of Contents
 
-1. [Usage](#usage)
-2. [Getting RADSan](#getting-radsan)
-3. [CMake](#cmake)
-4. [Configuration](#configuration)
-    1. [Error Modes](#error-modes)
-    2. [Disabling RADSan](#disabling-radsan)
-    3. [Choice of symbolizer](#choice-of-symbolizer)
-5. [How it works](#how-it-works)
-6. [Building from source](#building-from-source)
-7. [Running the tests](#running-the-tests)
-8. [Contact](#contact)
+1. [Getting RADSan](#getting-radsan)
+    a. [Docker](#docker)
+    b. [Building From Source](#building-from-source)
+2. [Usage](#usage)
+    a. [CMake](#cmake)
+3. [Configuration](#configuration)
+    a. [Error Modes](#error-modes)
+    b. [Disabling RADSan](#disabling-radsan)
+    c. [Choice of symbolizer](#choice-of-symbolizer)
+4. [How it works](#how-it-works)
+5. [Development](#developement)
+    a. [Building the Docker Image](#building-the-docker-image)
+    a. [Running the tests](#running-the-tests)
+6. [Contact](#contact)
+
+# Getting RADSan
+
+## Docker
+
+The fastest way to try RealtimeSanitizer is to pull the [pre-built docker
+image](https://hub.docker.com/repository/docker/realtimesanitizer/radsan-clang/), which has `clang` (and other `llvm` tooling) with RADSan readily installed.
+
+```sh
+docker pull realtimesanitizer/radsan-clang
+```
+
+You can quickly experiment in your own repository using a shared-volume:
+
+```sh
+docker run -v $(pwd):/my_repo -it realtimesanitizer/radsan-clang /bin/bash
+```
+
+which mounts the host's current working directory at path `/my_repo` in the
+container. Alternatively, you may prefer to use the RADSan Docker image as a
+parent image for your own development or CI environment:
+
+```Dockerfile
+FROM realtimesanitizer/radsan-clang:latest
+RUN apt-get update && apt-get install -y git cmake vim
+```
+
+## Building from source on Linux & macOS
+
+
+Building RADSan-enabled clang is performed entirely within the fork of the
+llvm-project submodule. The llvm-project is a CMake project, and takes a bit of
+time to build. 
+
+To minimise this build time, we recommend using the `ninja`
+build system, and configuring with a few specific CMake settings:
+
+```sh
+git clone https://github.com/realtime-sanitizer/radsan && cd radsan
+git submodule update --init --recursive && cd llvm-project
+mkdir build && cd build
+cmake -G Ninja \
+   -DCMAKE_BUILD_TYPE=Release \
+   -DBUILD_SHARED_LIBS=ON \
+   -DLLVM_ENABLE_PROJECTS="clang;compiler-rt" \
+   -DLLVM_TARGETS_TO_BUILD=Native \
+   ../llvm
+ninja -j8 clang compiler-rt llvm-symbolizer
+```
+
+If built successfully, `clang` should have appeared inside the `bin/` folder,
+and the radsan dynamic library should be in `lib/`:
+
+```sh
+> find $(pwd)/bin | grep clang
+$RADSAN_ROOT/llvm-project/build/bin/clang
+$RADSAN_ROOT/llvm-project/build/bin/clang-tblgen
+$RADSAN_ROOT/llvm-project/build/bin/clang-cl
+$RADSAN_ROOT/llvm-project/build/bin/clang++
+$RADSAN_ROOT/llvm-project/build/bin/clang-cpp
+$RADSAN_ROOT/llvm-project/build/bin/clang-18
+> find $(pwd)/lib | grep radsan
+$RADSAN_ROOT/llvm-project/build/lib/clang/18/lib/darwin/libclang_rt.radsan_osx_dynamic.dylib
+```
+
+These absolute paths will be used as your compiler in the [Usage](#usage) section.
+
+## Windows
+
+Apologies, RealtimeSanitizer does not yet support Windows. We very much welcome
+contributions, so please [contact us](#contact) if you're interested.
 
 # Usage
 
 Using RealtimeSanitizer requires only two actions:
 
-1. mark a real-time function with the `[[clang::realtime]]` attribute:
+1. Mark a real-time function with the `[[clang::realtime]]` attribute:
 
 ```cpp
 [[clang::realtime]] void process (processing_data const & data)
@@ -40,15 +114,21 @@ Using RealtimeSanitizer requires only two actions:
 }
 ```
 
-2. add `-fsanitize=realtime` to your compile and link flags:
+2. Add `-fsanitize=realtime` to your compile and link flags directly (or see [CMake](#cmake) below). 
 
+With RADSan docker:
 ```sh
 clang -fsanitize=realtime main.cpp
 ```
 
+With compiled RADSan:
+```
+$RADSAN_ROOT/llvm-project/build/bin/clang -fsanitize=realtime main.cpp
+```
+
 At run-time, RADSan presents detected real-time violations with a helpful stack trace:
 
-```
+```sh
 ./a.out
 Real-time violation: intercepted call to real-time unsafe function `malloc` in real-time context! Stack trace:
     #0 0x5644f383d78a in radsan::printStackTrace() /llvm-project/compiler-rt/lib/radsan/radsan_stack.cpp:36:5
@@ -70,45 +150,10 @@ Real-time violation: intercepted call to real-time unsafe function `malloc` in r
     #16 0x5644f383d4a4 in _start (/root/test/a.out+0x64a4)
 ```
 
-# Getting RADSan
 
-## Docker
 
-The fastest way to try RealtimeSanitizer is to pull the [pre-built docker
-image](https://hub.docker.com/repository/docker/realtimesanitizer/radsan-clang/),
-which has `clang` (and other `llvm` tooling) with RADSan readily installed.
 
-```sh
-docker pull realtimesanitizer/radsan-clang
-```
-
-You can quickly experiment in your own repository using a shared-volume:
-
-```sh
-docker run -v $(pwd):/my_repo -it realtimesanitizer/radsan-clang /bin/bash
-```
-
-which mounts the host's current working directory at path `/my_repo` in the
-container. Alternatively, you may prefer to use the RADSan Docker image as a
-parent image for your own development or CI environment:
-
-```Dockerfile
-FROM realtimesanitizer/radsan-clang:latest
-RUN apt-get update && apt-get install -y git cmake vim
-```
-
-## Linux & macOS
-
-Pre-built binaries for Linux and macOS are not yet available for download.
-Please see the "Building from source" section below for instructions.
-
-## Windows
-
-Apologies, RealtimeSanitizer does not yet support Windows. We very much welcome
-contributions, so please contact us (details at the bottom of this README) if
-you're interested.
-
-# CMake
+## CMake
 
 RADSan-enabled clang is installed to `/usr/local` in the RADSan Docker image,
 and CMake will automatically detect it. However, if you've built RADSan from
@@ -123,7 +168,7 @@ CC=/path/to/built/clang CXX=/path/to/built/clang++ cmake ..
 2. passing the `CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER` options to cmake
 
 ```sh
-cmake -DCMAKE_CXX_COMPILER=/path/to/built/clang++ ..
+cmake -DCMAKE_C_COMPILER=/path/to/built/clang -DCMAKE_CXX_COMPILER=/path/to/built/clang++ 
 ```
 
 3. or using `set(CMAKE_CXX_COMPILER ...)` in your CMake project file.
@@ -131,6 +176,7 @@ cmake -DCMAKE_CXX_COMPILER=/path/to/built/clang++ ..
 
 ```cmake
 set(CMAKE_CXX_COMPILER /path/to/built/clang++)
+set(CMAKE_C_COMPILER   /path/to/built/clang)
 ```
 
 Adding the compiler flag `-fsanitize=realtime` can be done however works best
@@ -232,43 +278,10 @@ Radsan contains a submodule with a fork of the `llvm-project`. This fork contain
       }
       ```
 
-# Building from source
+# Development
 
-## Clang with RealtimeSanitizer
 
-Building RADSan-enabled clang is performed entirely within the fork of the
-llvm-project submodule. The llvm-project is a CMake project, and takes a bit of
-time to build. To minimise this build time, we recommend using the `ninja`
-build system, and configuring with the following CMake settings:
-
-```sh
-cd llvm-project
-mkdir build && cd build
-cmake -G Ninja \
-   -DCMAKE_BUILD_TYPE=Release \
-   -DBUILD_SHARED_LIBS=ON \
-   -DLLVM_ENABLE_PROJECTS="clang;compiler-rt" \
-   -DLLVM_TARGETS_TO_BUILD=Native \
-   ../llvm
-ninja -j8 clang compiler-rt llvm-symbolizer
-```
-
-If built successfully, `clang` should have appeared inside the `bin/` folder,
-and the radsan dynamic library should be in `lib/`:
-
-```
-> find bin | grep clang
-bin/clang
-bin/clang-tblgen
-bin/clang-cl
-bin/clang++
-bin/clang-cpp
-bin/clang-18
-> find lib | grep radsan
-lib/clang/18/lib/darwin/libclang_rt.radsan_osx_dynamic.dylib
-```
-
-## RADSan Docker image
+## Building the Docker image
 
 Building the Docker image locally is straightforward:
 
@@ -276,7 +289,7 @@ Building the Docker image locally is straightforward:
 docker build -t radsan -f docker/Dockerfile .
 ```
 
-# Running the tests
+## Running the tests
 
 RADSan follows the existing sanitizer testing patterns, and adds two new test
 targets to the compiler-rt project for each architecture `arch`:
