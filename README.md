@@ -1,3 +1,4 @@
+
 # Realtime Sanitizer
 
 RealtimeSanitizer (a.k.a. RADSan) is a real-time safety testing tool for C and
@@ -13,11 +14,61 @@ will cause RADSan to error, but only if they are called within a real-time
 context, as defined by the user. Real-time contexts are defined by the user
 simply by marking functions with the `[[clang::realtime]]` attribute.
 
+# Example Usage
+
+Using RealtimeSanitizer requires only two actions:
+
+1. Mark a real-time function with the `[[clang::realtime]]` attribute:
+
+```cpp
+[[clang::realtime]] void process (processing_data const & data)
+{
+    auto x = std::vector<float> (16); // oops!
+}
+```
+
+2. Add `-fsanitize=realtime` to your compile and link flags directly (or see [CMake](#cmake) below). 
+
+With the [RADSan docker image](#docker):
+```sh
+clang -fsanitize=realtime main.cpp
+```
+
+With [RADSan enabled clang](#building-from-source-on-linux-and-osx):
+```
+$RADSAN_ROOT/llvm-project/build/bin/clang -fsanitize=realtime main.cpp
+```
+
+At run-time, RADSan presents detected real-time violations with a helpful stack trace:
+
+```sh
+./a.out
+Real-time violation: intercepted call to real-time unsafe function `malloc` in real-time context! Stack trace:
+    #0 0x5644f383d78a in radsan::printStackTrace() /llvm-project/compiler-rt/lib/radsan/radsan_stack.cpp:36:5
+    #1 0x5644f383d630 in radsan::Context::printDiagnostics(char const*) /llvm-project/compiler-rt/lib/radsan/radsan_context.cpp:37:3
+    #2 0x5644f383d5d5 in radsan::Context::exitIfRealtime(char const*) /llvm-project/compiler-rt/lib/radsan/radsan_context.cpp:24:5
+    #3 0x5644f383e067 in exitIfRealtime /llvm-project/compiler-rt/lib/radsan/radsan_interceptors.cpp:29:29
+    #4 0x5644f383e067 in malloc /llvm-project/compiler-rt/lib/radsan/radsan_interceptors.cpp:221:3
+    #5 0x7f7a072b798b in operator new(unsigned long) (/lib/x86_64-linux-gnu/libstdc++.so.6+0xae98b) (BuildId: e37fe1a879783838de78cbc8c80621fa685d58a2)
+    #6 0x5644f3861d7f in std::__new_allocator<float>::allocate(unsigned long, void const*) (/root/test/a.out+0x2ad7f)
+    #7 0x5644f3861d10 in std::allocator_traits<std::allocator<float>>::allocate(std::allocator<float>&, unsigned long) (/root/test/a.out+0x2ad10)
+    #8 0x5644f3861ccf in std::_Vector_base<float, std::allocator<float>>::_M_allocate(unsigned long) (/root/test/a.out+0x2accf)
+    #9 0x5644f3861c20 in std::_Vector_base<float, std::allocator<float>>::_M_create_storage(unsigned long) (/root/test/a.out+0x2ac20)
+    #10 0x5644f38619b1 in std::_Vector_base<float, std::allocator<float>>::_Vector_base(unsigned long, std::allocator<float> const&) (/root/test/a.out+0x2a9b1)
+    #11 0x5644f3861838 in std::vector<float, std::allocator<float>>::vector(unsigned long, std::allocator<float> const&) (/root/test/a.out+0x2a838)
+    #12 0x5644f3861767 in process(processing_data const&) (/root/test/a.out+0x2a767)
+    #13 0x5644f38617d0 in main (/root/test/a.out+0x2a7d0)
+    #14 0x7f7a06eefd8f  (/lib/x86_64-linux-gnu/libc.so.6+0x29d8f) (BuildId: a43bfc8428df6623cd498c9c0caeb91aec9be4f9)
+    #15 0x7f7a06eefe3f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29e3f) (BuildId: a43bfc8428df6623cd498c9c0caeb91aec9be4f9)
+    #16 0x5644f383d4a4 in _start (/root/test/a.out+0x64a4)
+```
+
+
 # Table Of Contents
 
 1. [Getting RADSan](#getting-radsan)
     a. [Docker](#docker)
-    b. [Building From Source](#building-from-source)
+    b. [Building From Source](#building-from-source-on-linux-and-osx)
 2. [Usage](#usage)
     a. [CMake](#cmake)
 3. [Configuration](#configuration)
@@ -27,7 +78,7 @@ simply by marking functions with the `[[clang::realtime]]` attribute.
 4. [How it works](#how-it-works)
 5. [Development](#developement)
     a. [Building the Docker Image](#building-the-docker-image)
-    a. [Running the tests](#running-the-tests)
+    b. [Running the tests](#running-the-tests)
 6. [Contact](#contact)
 
 # Getting RADSan
@@ -56,7 +107,7 @@ FROM realtimesanitizer/radsan-clang:latest
 RUN apt-get update && apt-get install -y git cmake vim
 ```
 
-## Building from source on Linux & macOS
+## Building from source on Linux and macOS
 
 
 Building RADSan-enabled clang is performed entirely within the fork of the
@@ -101,56 +152,11 @@ These absolute paths will be used as your compiler in the [Usage](#usage) sectio
 Apologies, RealtimeSanitizer does not yet support Windows. We very much welcome
 contributions, so please [contact us](#contact) if you're interested.
 
+
+
 # Usage
 
-Using RealtimeSanitizer requires only two actions:
-
-1. Mark a real-time function with the `[[clang::realtime]]` attribute:
-
-```cpp
-[[clang::realtime]] void process (processing_data const & data)
-{
-    auto x = std::vector<float> (16); // oops!
-}
-```
-
-2. Add `-fsanitize=realtime` to your compile and link flags directly (or see [CMake](#cmake) below). 
-
-With RADSan docker:
-```sh
-clang -fsanitize=realtime main.cpp
-```
-
-With compiled RADSan:
-```
-$RADSAN_ROOT/llvm-project/build/bin/clang -fsanitize=realtime main.cpp
-```
-
-At run-time, RADSan presents detected real-time violations with a helpful stack trace:
-
-```sh
-./a.out
-Real-time violation: intercepted call to real-time unsafe function `malloc` in real-time context! Stack trace:
-    #0 0x5644f383d78a in radsan::printStackTrace() /llvm-project/compiler-rt/lib/radsan/radsan_stack.cpp:36:5
-    #1 0x5644f383d630 in radsan::Context::printDiagnostics(char const*) /llvm-project/compiler-rt/lib/radsan/radsan_context.cpp:37:3
-    #2 0x5644f383d5d5 in radsan::Context::exitIfRealtime(char const*) /llvm-project/compiler-rt/lib/radsan/radsan_context.cpp:24:5
-    #3 0x5644f383e067 in exitIfRealtime /llvm-project/compiler-rt/lib/radsan/radsan_interceptors.cpp:29:29
-    #4 0x5644f383e067 in malloc /llvm-project/compiler-rt/lib/radsan/radsan_interceptors.cpp:221:3
-    #5 0x7f7a072b798b in operator new(unsigned long) (/lib/x86_64-linux-gnu/libstdc++.so.6+0xae98b) (BuildId: e37fe1a879783838de78cbc8c80621fa685d58a2)
-    #6 0x5644f3861d7f in std::__new_allocator<float>::allocate(unsigned long, void const*) (/root/test/a.out+0x2ad7f)
-    #7 0x5644f3861d10 in std::allocator_traits<std::allocator<float>>::allocate(std::allocator<float>&, unsigned long) (/root/test/a.out+0x2ad10)
-    #8 0x5644f3861ccf in std::_Vector_base<float, std::allocator<float>>::_M_allocate(unsigned long) (/root/test/a.out+0x2accf)
-    #9 0x5644f3861c20 in std::_Vector_base<float, std::allocator<float>>::_M_create_storage(unsigned long) (/root/test/a.out+0x2ac20)
-    #10 0x5644f38619b1 in std::_Vector_base<float, std::allocator<float>>::_Vector_base(unsigned long, std::allocator<float> const&) (/root/test/a.out+0x2a9b1)
-    #11 0x5644f3861838 in std::vector<float, std::allocator<float>>::vector(unsigned long, std::allocator<float> const&) (/root/test/a.out+0x2a838)
-    #12 0x5644f3861767 in process(processing_data const&) (/root/test/a.out+0x2a767)
-    #13 0x5644f38617d0 in main (/root/test/a.out+0x2a7d0)
-    #14 0x7f7a06eefd8f  (/lib/x86_64-linux-gnu/libc.so.6+0x29d8f) (BuildId: a43bfc8428df6623cd498c9c0caeb91aec9be4f9)
-    #15 0x7f7a06eefe3f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29e3f) (BuildId: a43bfc8428df6623cd498c9c0caeb91aec9be4f9)
-    #16 0x5644f383d4a4 in _start (/root/test/a.out+0x64a4)
-```
-
-
+See [Example Usage](#example-usage).
 
 
 ## CMake
