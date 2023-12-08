@@ -34,7 +34,7 @@ submodules:
 
 generate: build-folder submodules
 	if [ ! -f $(BUILD_DIR)/CMakeCache.txt ]; then \
-		cmake -G "$${RADSAN_CMAKE_GENERATOR:-Ninja}" \
+		cmake -G "$${RADSAN_CMAKE_GENERATOR:-Unix Makefiles}" \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DBUILD_SHARED_LIBS=ON \
 		-DCOMPILER_RT_BUILD_SANITIZERS=ON \
@@ -47,7 +47,7 @@ generate: build-folder submodules
 		./llvm-project/llvm; \
 	fi
 
-test-radsan: generate clang
+test: generate clang
 	cmake --build $(BUILD_DIR) --target TRadsan-arm64-NoInstTest TRadsan-arm64-Test -j$(NPROCS)
 	$(BUILD_DIR)/projects/compiler-rt/lib/radsan/tests/Radsan-arm64-NoInstTest
 	$(BUILD_DIR)/projects/compiler-rt/lib/radsan/tests/Radsan-arm64-Test
@@ -58,13 +58,10 @@ check-compiler-rt: generate
 docker:
 	docker build -t radsan -f $(PWD)/docker/Dockerfile .
 
-# Does not include check-compiler-rt as it is extremely slow
-test: clang test-radsan
-
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: help clang build-folder submodules generate test-radsan check-compiler-rt test clean docker test-all
+.PHONY: help clang build-folder submodules generate check-compiler-rt test clean docker test-all
 
 help:
 	@echo "Usage: make [target]"
@@ -73,16 +70,15 @@ help:
 	@echo "  help              Show this help message"
 	@echo "  generate          Generate build files"
 	@echo "  clang             Build clang and compiler-rt"
-	@echo "  test-radsan       Build and run Radsan tests"
-	@echo "  check-compiler-rt Run compiler-rt tests (extremely slow)"
+	@echo "  check-compiler-rt Run all compiler-rt tests (extremely slow)"
 	@echo "  test              Build and run radsan tests"
 	@echo "  docker            Build docker image"
 	@echo "  clean             Clean build directory"
 	@echo ""
 	@echo "Variables:"
-	@echo "  RADSAN_BUILD_DIR  Build directory (default: build)"
-	@echo "  RADSAN_CMAKE_GENERATOR  CMake generator (default: Ninja)"
+	@echo "  RADSAN_BUILD_DIR        Build directory (default: build)"
+	@echo "  RADSAN_CMAKE_GENERATOR  CMake generator (default: Unix Makefiles)"
 	@echo "  RADSAN_MIN_OSX_VERSION  Minimum macOS version (default: 10.15)"
 	@echo ""
 	@echo "Example:"
-	@echo "  make RADSAN_BUILD_DIR=build-clang RADSAN_CMAKE_GENERATOR=Unix\ Makefiles RADSAN_MIN_OSX_VERSION=10.14 clang"
+	@echo "  make RADSAN_BUILD_DIR=build-clang RADSAN_CMAKE_GENERATOR=Ninja RADSAN_MIN_OSX_VERSION=10.14 clang"
