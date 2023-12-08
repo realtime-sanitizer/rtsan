@@ -14,9 +14,9 @@ will cause RADSan to error, but only if they are called within a real-time
 context, as defined by the user. Real-time contexts are defined by the user
 simply by marking functions with the `[[clang::realtime]]` attribute.
 
-# Example Usage
+## Usage
 
-Using RealtimeSanitizer requires only two actions:
+Using RealtimeSanitizer requires RADSan-enabled `clang` and two actions:
 
 1. Mark a real-time function with the `[[clang::realtime]]` attribute:
 
@@ -27,14 +27,13 @@ Using RealtimeSanitizer requires only two actions:
 }
 ```
 
-2. Add `-fsanitize=realtime` to your compile and link flags directly (or see [CMake](#cmake) below). 
+2. Add `-fsanitize=realtime` to your compile and link flags (for CMake see [below](#cmake)):
 
-When using RADSan enabled clang, built from this repo:
 ```sh
 clang -fsanitize=realtime main.cpp
 ```
 
-At run-time, RADSan presents detected real-time violations with a helpful stack trace:
+At run-time, real-time violations are presented with a helpful stack trace:
 
 ```sh
 ./a.out
@@ -58,7 +57,6 @@ Real-time violation: intercepted call to real-time unsafe function `malloc` in r
     #16 0x5644f383d4a4 in _start (/root/test/a.out+0x64a4)
 ```
 
-
 # Table Of Contents
 
 1. [Getting RADSan](#getting-radsan)
@@ -81,7 +79,8 @@ Real-time violation: intercepted call to real-time unsafe function `malloc` in r
 ## Docker
 
 The fastest way to try RealtimeSanitizer is to pull the [pre-built docker
-image](https://hub.docker.com/repository/docker/realtimesanitizer/radsan-clang/), which has `clang` (and other `llvm` tooling) with RADSan readily installed.
+image](https://hub.docker.com/repository/docker/realtimesanitizer/radsan-clang/),
+which has `clang` (and other `llvm` tooling) with RADSan readily installed.
 
 ```sh
 docker pull realtimesanitizer/radsan-clang
@@ -107,7 +106,7 @@ RUN apt-get update && apt-get install -y git cmake vim
 
 Building RADSan-enabled clang is performed entirely within the fork of the
 llvm-project submodule. The llvm-project is a CMake project, and takes a bit of
-time to build. 
+time to build.
 
 To minimise this build time, we recommend using the `ninja`
 build system, and configuring with a few specific CMake settings:
@@ -140,7 +139,8 @@ $RADSAN_ROOT/llvm-project/build/bin/clang-18
 $RADSAN_ROOT/llvm-project/build/lib/clang/18/lib/darwin/libclang_rt.radsan_osx_dynamic.dylib
 ```
 
-These absolute paths will be used as your C and C++ compilers, as seen in the [Usage](#usage) section.
+These absolute paths will be used as your C and C++ compilers, as seen in the
+[Usage](#usage) section.
 
 ```
 $RADSAN_ROOT/llvm-project/build/bin/clang++ -fsanitize=realtime main.cpp
@@ -173,7 +173,7 @@ CC=/path/to/built/clang CXX=/path/to/built/clang++ cmake ..
 2. passing the `CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER` options to cmake
 
 ```sh
-cmake -DCMAKE_C_COMPILER=/path/to/built/clang -DCMAKE_CXX_COMPILER=/path/to/built/clang++ 
+cmake -DCMAKE_C_COMPILER=/path/to/built/clang -DCMAKE_CXX_COMPILER=/path/to/built/clang++
 ```
 
 3. or using `set(CMAKE_CXX_COMPILER ...)` in your CMake project file.
