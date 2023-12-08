@@ -29,14 +29,9 @@ Using RealtimeSanitizer requires only two actions:
 
 2. Add `-fsanitize=realtime` to your compile and link flags directly (or see [CMake](#cmake) below). 
 
-With the [RADSan docker image](#docker):
+When using RADSan enabled clang, built from this repo:
 ```sh
 clang -fsanitize=realtime main.cpp
-```
-
-With [RADSan enabled clang](#building-from-source-on-linux-and-osx):
-```
-$RADSAN_ROOT/llvm-project/build/bin/clang -fsanitize=realtime main.cpp
 ```
 
 At run-time, RADSan presents detected real-time violations with a helpful stack trace:
@@ -67,18 +62,18 @@ Real-time violation: intercepted call to real-time unsafe function `malloc` in r
 # Table Of Contents
 
 1. [Getting RADSan](#getting-radsan)
-    a. [Docker](#docker)
-    b. [Building From Source](#building-from-source-on-linux-and-osx)
+    1. [Docker](#docker)
+    2. [Building From Source](#building-from-source-on-linux-and-osx)
 2. [Usage](#usage)
-    a. [CMake](#cmake)
+    1. [CMake](#cmake)
 3. [Configuration](#configuration)
-    a. [Error Modes](#error-modes)
-    b. [Disabling RADSan](#disabling-radsan)
-    c. [Choice of symbolizer](#choice-of-symbolizer)
+    1. [Error Modes](#error-modes)
+    2. [Disabling RADSan](#disabling-radsan)
+    3. [Choice of symbolizer](#choice-of-symbolizer)
 4. [How it works](#how-it-works)
 5. [Development](#developement)
-    a. [Building the Docker Image](#building-the-docker-image)
-    b. [Running the tests](#running-the-tests)
+    1. [Building the Docker Image](#building-the-docker-image)
+    2. [Running the tests](#running-the-tests)
 6. [Contact](#contact)
 
 # Getting RADSan
@@ -145,7 +140,11 @@ $RADSAN_ROOT/llvm-project/build/bin/clang-18
 $RADSAN_ROOT/llvm-project/build/lib/clang/18/lib/darwin/libclang_rt.radsan_osx_dynamic.dylib
 ```
 
-These absolute paths will be used as your compiler in the [Usage](#usage) section.
+These absolute paths will be used as your C and C++ compilers, as seen in the [Usage](#usage) section.
+
+```
+$RADSAN_ROOT/llvm-project/build/bin/clang++ -fsanitize=realtime main.cpp
+```
 
 ## Windows
 
