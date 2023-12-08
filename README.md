@@ -110,34 +110,32 @@ llvm-project submodule. The llvm-project is a CMake project, and takes a bit of
 time to build. 
 
 To minimise this build time, we recommend using the `ninja`
-build system, and configuring with a few specific CMake settings:
+build system:
 
 ```sh
-git clone https://github.com/realtime-sanitizer/radsan && cd radsan
-git submodule update --init --recursive && cd llvm-project
-mkdir build && cd build
-cmake -G Ninja \
-   -DCMAKE_BUILD_TYPE=Release \
-   -DBUILD_SHARED_LIBS=ON \
-   -DLLVM_ENABLE_PROJECTS="clang;compiler-rt" \
-   -DLLVM_TARGETS_TO_BUILD=Native \
-   ../llvm
-ninja -j8 clang compiler-rt llvm-symbolizer
+make # run with Unix Makefiles, by default, a bit slow
+make RADSAN_CMAKE_GENERATOR=Ninja
 ```
 
-If built successfully, `clang` should have appeared inside the `bin/` folder,
-and the radsan dynamic library should be in `lib/`:
+If built successfully, the path to the `clang` binaries will be output
 
 ```sh
-> find $(pwd)/bin | grep clang
-$RADSAN_ROOT/llvm-project/build/bin/clang
-$RADSAN_ROOT/llvm-project/build/bin/clang-tblgen
-$RADSAN_ROOT/llvm-project/build/bin/clang-cl
-$RADSAN_ROOT/llvm-project/build/bin/clang++
-$RADSAN_ROOT/llvm-project/build/bin/clang-cpp
-$RADSAN_ROOT/llvm-project/build/bin/clang-18
-> find $(pwd)/lib | grep radsan
-$RADSAN_ROOT/llvm-project/build/lib/clang/18/lib/darwin/libclang_rt.radsan_osx_dynamic.dylib
+>make 
+
+...
+
+clang output:
+
+$RADSAN_ROOT/build/bin/clang
+$RADSAN_ROOT/build/bin/clang-cl
+$RADSAN_ROOT/build/bin/clang++
+$RADSAN_ROOT/build/bin/clang-cpp
+```
+
+The radsan dynamic library should be in `lib/`:
+```sh
+> find $(pwd)/build/ -name "*radsan*dylib" 
+$RADSAN_ROOT/build/lib/clang/18/lib/darwin/libclang_rt.radsan_osx_dynamic.dylib
 ```
 
 These absolute paths will be used as your C and C++ compilers, as seen in the [Usage](#usage) section.
@@ -150,7 +148,6 @@ $RADSAN_ROOT/llvm-project/build/bin/clang++ -fsanitize=realtime main.cpp
 
 Apologies, RealtimeSanitizer does not yet support Windows. We very much welcome
 contributions, so please [contact us](#contact) if you're interested.
-
 
 
 # Usage
@@ -291,7 +288,7 @@ Radsan contains a submodule with a fork of the `llvm-project`. This fork contain
 Building the Docker image locally is straightforward:
 
 ```sh
-docker build -t radsan -f docker/Dockerfile .
+make docker
 ```
 
 ## Running the tests
@@ -302,12 +299,16 @@ targets to the compiler-rt project for each architecture `arch`:
 1. `TRadsan-${arch}-Test` (which is instrumented by RADSan), and
 2. `TRadsan-${arch}-NoInstTest` (which are unit tests that do not need the RADSan instrumentation)
 
-Here's an example script for running the RADSan tests in isolation on `arm64`
-architecture. From your build folder in llvm-project:
+To run the tests:
 
 ```sh
-ninja TRadsan-arm64-Test && ./projects/compiler-rt/lib/radsan/tests/Radsan-arm64-Test
-ninja TRadsan-arm64-NoInstTest && ./projects/compiler-rt/lib/radsan/tests/Radsan-arm64-NoInstTest
+make test
+```
+
+To run the full test suite of llvm compiler-rt (very slow, may have additional unexpected failures):
+
+```sh
+make check-compiler-rt
 ```
 
 # Contact

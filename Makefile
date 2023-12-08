@@ -8,6 +8,7 @@ endif
 
 NPROCS := 1
 OS := $(shell uname -s)
+ARCH := $(shell uname -m)
 
 ifeq ($(OS),Linux)
 	NPROCS := $(shell grep -c ^processor /proc/cpuinfo)
@@ -47,10 +48,10 @@ generate: build-folder submodules
 		./llvm-project/llvm; \
 	fi
 
-test: generate clang
-	cmake --build $(BUILD_DIR) --target TRadsan-arm64-NoInstTest TRadsan-arm64-Test -j$(NPROCS)
-	$(BUILD_DIR)/projects/compiler-rt/lib/radsan/tests/Radsan-arm64-NoInstTest
-	$(BUILD_DIR)/projects/compiler-rt/lib/radsan/tests/Radsan-arm64-Test
+test: generate 
+	cmake --build $(BUILD_DIR) --target TRadsan-$(ARCH)-NoInstTest TRadsan-$(ARCH)-Test -j$(NPROCS)
+	$(BUILD_DIR)/projects/compiler-rt/lib/radsan/tests/Radsan-$(ARCH)-NoInstTest
+	$(BUILD_DIR)/projects/compiler-rt/lib/radsan/tests/Radsan-$(ARCH)-Test
 
 check-compiler-rt: generate
 	cmake --build $(BUILD_DIR) --target check-compiler-rt -j$(NPROCS)
