@@ -1,4 +1,4 @@
-name: Makefile CI
+name: Radsan CI
 
 on:
   push:
