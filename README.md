@@ -259,7 +259,7 @@ Radsan contains a submodule with a fork of the `llvm-project`. This fork contain
 - Changes to the clang compiler front end that:
 
     - check for `-fsanitize=realtime` as a compiler flag,
-    - look for functions marked with the `[[clang::runtime]]` function attribute,
+    - look for functions marked with the `[[clang::realtime]]` function attribute,
     - insert calls to `radsan_realtime_enter()` & `radsan_realtime_exit()` at
       the start and end of each of these realtime functions, which are used by the
       radsan library (described below), to keep track of whether we are inside
