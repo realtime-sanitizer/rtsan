@@ -55,6 +55,9 @@ test: test-targets
 	$(BUILD_DIR)/projects/compiler-rt/lib/radsan/tests/Radsan-$(ARCH)-NoInstTest
 	$(BUILD_DIR)/projects/compiler-rt/lib/radsan/tests/Radsan-$(ARCH)-Test
 
+test-all: generate
+	cmake --build $(BUILD_DIR) --target check-radsan -j$(NPROCS)
+
 check-compiler-rt: generate
 	cmake --build $(BUILD_DIR) --target check-compiler-rt -j$(NPROCS)
 
