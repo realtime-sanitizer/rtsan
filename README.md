@@ -305,6 +305,13 @@ To run the tests:
 make test
 ```
 
+To run all the tests, including the `lit` tests which compile test programs, run the command below. Note that not all these tests pass, some of them fail depending on the architecture of your machine.
+
+```sh
+make test-all
+```
+
+
 To run the full test suite of llvm compiler-rt (very slow, may have additional unexpected failures):
 
 ```sh
