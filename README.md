@@ -298,19 +298,13 @@ targets to the compiler-rt project for each architecture `arch`:
 
 1. `TRadsan-${arch}-Test` (which is instrumented by RADSan), and
 2. `TRadsan-${arch}-NoInstTest` (which are unit tests that do not need the RADSan instrumentation)
+3. The "lit tests" which compile and run tests programs from scratch (see llvm-project/compiler-rt/test/radsan/TestCases/)
 
 To run the tests:
 
 ```sh
 make test
 ```
-
-To run all the tests, including the `lit` tests which compile test programs, run the command below. Note that not all these tests pass, some of them fail depending on the architecture of your machine.
-
-```sh
-make test-all
-```
-
 
 To run the full test suite of llvm compiler-rt (very slow, may have additional unexpected failures):
 
