@@ -263,32 +263,32 @@ by setting the envionment variable `RADSAN_SYMBOLIZER_PATH` at run-time.
 RADSan contains a submodule with a fork of the `llvm-project`. This fork makes
 two additions to the LLVM tool set:
 
-1. Additions to the `clang` compiler front end that:
-  1. accept `-fsanitize=realtime` as a compiler flag,
-  2. accept `[[clang::realtime]]` as a function attribute, and
-  3. if RealtimeSanitizer is activated, insert calls to
-     `radsan_realtime_enter()` and `radsan_realtime_exit()` at the entry and
-     exit points of every `[[clang::realtime]]` function. The `radsan` run-time
-     library (described below) is responsible for implementing these methods
-     and performing the sanitization logic.
+- Additions to the `clang` compiler front end that:
+  - accept `-fsanitize=realtime` as a compiler flag,
+  - accept `[[clang::realtime]]` as a function attribute, and
+  - if RealtimeSanitizer is activated, insert calls to
+    `radsan_realtime_enter()` and `radsan_realtime_exit()` at the entry and
+    exit points of every `[[clang::realtime]]` function. The `radsan` run-time
+    library (described below) is responsible for implementing these methods
+    and performing the sanitization logic.
 
-2. A new `radsan` library to LLVM's `compiler-rt` tooling, which:
-  1. links to your application at run time,
-  2. tracks whether every thread is in a real-time context (i.e. whether the
-     current function or any of its callers in the call stack were marked as
-     `[[clang::realtime]]`), and
-  3. intercepts system library calls like `malloc` and `pthread_mutex_lock` at
-     runtime. All interceptors follow the same pattern;
-    1. check if the current thread is in a real-time context, and
-    2. if not real-time, then call the "real" system library function, or
-    3. if real-time, raise an error.
+- A new `radsan` library to LLVM's `compiler-rt` tooling, which:
+  - links to your application at run time,
+  - tracks whether every thread is in a real-time context (i.e. whether the
+    current function or any of its callers in the call stack were marked as
+    `[[clang::realtime]]`), and
+  - intercepts system library calls like `malloc` and `pthread_mutex_lock` at
+    runtime. All interceptors follow the same pattern;
+    - check if the current thread is in a real-time context, and
+    - if not real-time, then call the "real" system library function, or
+    - if real-time, raise an error.
 
-    ```cpp
-    INTERCEPTOR(void *, malloc, SIZE_T size) {
-      radsan::expectNotRealtime("malloc");
-      return REAL(malloc)(size);
-    }
-    ```
+```cpp
+INTERCEPTOR(void *, malloc, SIZE_T size) {
+  radsan::expectNotRealtime("malloc");
+  return REAL(malloc)(size);
+}
+```
 
 # Development
 
