@@ -308,6 +308,7 @@ targets to the compiler-rt project for each architecture `arch`:
 
 1. `TRadsan-${arch}-Test` (which is instrumented by RADSan), and
 2. `TRadsan-${arch}-NoInstTest` (which are unit tests that do not need the RADSan instrumentation)
+3. The "lit tests" which compile and run tests programs from scratch (see llvm-project/compiler-rt/test/radsan/TestCases/)
 
 To run the tests:
 
