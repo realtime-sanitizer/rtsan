@@ -72,7 +72,8 @@ Real-time violation: intercepted call to real-time unsafe function `malloc` in r
 5. [Development](#developement)
     1. [Building the Docker Image](#building-the-docker-image)
     2. [Running the tests](#running-the-tests)
-6. [Contact](#contact)
+6. [Roadmap](#roadmap)
+7. [Contact](#contact)
 
 # Getting RADSan
 
@@ -119,7 +120,7 @@ make RADSAN_CMAKE_GENERATOR=Ninja
 If built successfully, the path to the `clang` binaries will be output
 
 ```sh
->make 
+> make
 
 ...
 
@@ -133,14 +134,14 @@ $RADSAN_ROOT/build/bin/clang-cpp
 
 The radsan dynamic library should be in `lib/`:
 ```sh
-> find $(pwd)/build/ -name "*radsan*dylib" 
+> find $(pwd)/build/ -name "*radsan*dylib"
 $RADSAN_ROOT/build/lib/clang/18/lib/darwin/libclang_rt.radsan_osx_dynamic.dylib
 ```
 
 These absolute paths will be used as your C and C++ compilers, as seen in the
 [Usage](#usage) section.
 
-```
+```sh
 $RADSAN_ROOT/llvm-project/build/bin/clang++ -fsanitize=realtime main.cpp
 ```
 
@@ -242,7 +243,6 @@ void mutex_unlock_uncontended (std::mutex& m)
     m.unlock();
 }
 
-
 [[clang::realtime]] float process (float x)
 {
     ...
@@ -260,31 +260,35 @@ by setting the envionment variable `RADSAN_SYMBOLIZER_PATH` at run-time.
 
 # How it works
 
-Radsan contains a submodule with a fork of the `llvm-project`. This fork contains 2 main areas of new functionality:
+RADSan contains a submodule with a fork of the `llvm-project`. This fork makes
+two additions to the LLVM tool set:
 
-- Changes to the clang compiler front end that:
+- Additions to the `clang` compiler front end that:
+  - accept `-fsanitize=realtime` as a compiler flag,
+  - accept `[[clang::realtime]]` as a function attribute, and
+  - if RealtimeSanitizer is activated, insert calls to
+    `radsan_realtime_enter()` and `radsan_realtime_exit()` at the entry and
+    exit points of every `[[clang::realtime]]` function. The `radsan` run-time
+    library (described below) is responsible for implementing these methods
+    and performing the sanitization logic.
 
-    - check for `-fsanitize=realtime` as a compiler flag,
-    - look for functions marked with the `[[clang::realtime]]` function attribute,
-    - insert calls to `radsan_realtime_enter()` & `radsan_realtime_exit()` at
-      the start and end of each of these realtime functions, which are used by the
-      radsan library (described below), to keep track of whether we are inside
-      a realtime context or not.
+- A new `radsan` library to LLVM's `compiler-rt` tooling, which:
+  - links to your application at run time,
+  - tracks whether every thread is in a real-time context (i.e. whether the
+    current function or any of its callers in the call stack were marked as
+    `[[clang::realtime]]`), and
+  - intercepts system library calls like `malloc` and `pthread_mutex_lock` at
+    runtime. All interceptors follow the same pattern;
+    - check if the current thread is in a real-time context, and
+    - if not real-time, then call the "real" system library function, or
+    - if real-time, raise an error.
 
-- `radsan` library
-
-    - This library links to your application at run time and contains 2 main functional areas:
-        - `radsan::Context`: which is used to maintain whether we are in a "real-time" context and handle any errors
-        -  The `INTERCEPTOR`s, which are used to intercept calls to the system library at runtime.
-            It uses interceptors from llvm's `compiler-rt` library and contains an interceptor
-            for each function we want to intercept. They all follow the same pattern: check if we're in a real-time context, if not, then call the "real" function, if it is, then handle the error
-
-      ```cpp
-      INTERCEPTOR(void *, malloc, SIZE_T size) {
-        radsan::expectNotRealtime("malloc");
-        return REAL(malloc)(size);
-      }
-      ```
+```cpp
+INTERCEPTOR(void *, malloc, SIZE_T size) {
+  radsan::expectNotRealtime("malloc");
+  return REAL(malloc)(size);
+}
+```
 
 # Development
 
@@ -318,11 +322,20 @@ To run the full test suite of llvm compiler-rt (very slow, may have additional u
 make check-compiler-rt
 ```
 
+# Roadmap
+
+The RADSan project keeps a public backlog and roadmap on
+[Trello](https://trello.com/b/6wpFlkqU). This board is used to distill and
+prioritise tasks originating from any source, including GitHub issues and pull
+requests, which we encourage anyone to submit.
+
+
 # Contact
 
-RealtimeSanitizer was developed by David Trevelyan and Ali Barker. We welcome
-contributions to make this tool more helpful to a wider group of developers.
-For all comments, suggestions and queries, please contact us by:
+RealtimeSanitizer was originally developed by David Trevelyan and Ali Barker.
+We are grateful for the valuable contributions from Chris Apple, and
+welcome further contributions to make this tool more helpful to a wider group
+of developers. For all comments, suggestions and queries, please contact us by:
 
 1. joining the [Discord server](https://discord.gg/DZqjbmSZzZ), or
 2. sending an email to realtime.sanitizer@gmail.com.
