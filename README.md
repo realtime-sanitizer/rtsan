@@ -229,19 +229,25 @@ certain special constraints, like if the mutex is never contested (you might be
 re-using multi-threaded code in a single-threaded context), or if it's only
 contested at times when a user is expecting a glitch anyway (if, say, an audio
 device is disconnected). RADSan always assumes the worst, and this may not be
-true for your particular use case. You can turn off RADSan's error detection
-temporarily by wrapping code in `radsan_off()` and `radsan_on()` as follows:
+true for your particular use case. 
+
+You can turn off RADSan's error detection for such a call by extracting the 
+behavior to a function, and adding adding the `no_sanitize` attribute:
+
 
 ```cpp
-#include "radsan.h" // (found in llvm-project/compiler-rt/lib/radsan)
+__attribute__((no_sanitize("realtime")))
+void mutex_unlock_uncontested (std::mutex& m)
+{
+    m.unlock();
+}
+
 
 [[clang::realtime]] float process (float x)
 {
-    auto const y = 2.0f * x;
-
-    radsan_off();
-    i_know_this_method_is_realtime_safe_but_radsan_complains_about_it();
-    radsan_on();
+    ...
+    mutex_unlock_uncontested(m); // I know this is always uncontested, thus real-time safe!
+    ...
 }
 ```
 
