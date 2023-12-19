@@ -223,11 +223,11 @@ The default configuration is `RADSAN_ERROR_MODE=exit`.
 
 You might find a case where you disagree with RADSan's assessment of real-time
 safety. Consider the case of locking and unlocking a mutex; these operations
-can block if the mutex is contested, and common advice is to avoid them in
+can block if the mutex is contended, and common advice is to avoid them in
 real-time contexts. However, it can be argued that their use is safe under
-certain special constraints, like if the mutex is never contested (you might be
+certain special constraints, like if the mutex is never contended (you might be
 re-using multi-threaded code in a single-threaded context), or if it's only
-contested at times when a user is expecting a glitch anyway (if, say, an audio
+contended at times when a user is expecting a glitch anyway (if, say, an audio
 device is disconnected). RADSan always assumes the worst, and this may not be
 true for your particular use case. 
 
@@ -237,7 +237,7 @@ behavior to a function, and adding adding the `no_sanitize` attribute:
 
 ```cpp
 __attribute__((no_sanitize("realtime")))
-void mutex_unlock_uncontested (std::mutex& m)
+void mutex_unlock_uncontended (std::mutex& m)
 {
     m.unlock();
 }
@@ -246,7 +246,7 @@ void mutex_unlock_uncontested (std::mutex& m)
 [[clang::realtime]] float process (float x)
 {
     ...
-    mutex_unlock_uncontested(m); // I know this is always uncontested, thus real-time safe!
+    mutex_unlock_uncontended(m); // I know this is always uncontended, thus real-time safe!
     ...
 }
 ```
