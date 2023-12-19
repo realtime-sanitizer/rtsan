@@ -52,8 +52,7 @@ test-targets: generate
 	cmake --build $(BUILD_DIR) --target TRadsan-$(ARCH)-Test TRadsan-$(ARCH)-NoInstTest -j$(NPROCS)
 
 test: test-targets
-	$(BUILD_DIR)/projects/compiler-rt/lib/radsan/tests/Radsan-$(ARCH)-NoInstTest
-	$(BUILD_DIR)/projects/compiler-rt/lib/radsan/tests/Radsan-$(ARCH)-Test
+	cmake --build $(BUILD_DIR) --target check-radsan -j$(NPROCS)
 
 check-compiler-rt: generate
 	cmake --build $(BUILD_DIR) --target check-compiler-rt -j$(NPROCS)
@@ -73,9 +72,9 @@ help:
 	@echo "  help              Show this help message"
 	@echo "  generate          Generate build files"
 	@echo "  clang             Build clang and compiler-rt"
-	@echo "  check-compiler-rt Run all compiler-rt tests (extremely slow)"
+	@echo "  check-compiler-rt Run all compiler-rt tests (extremely slow, may have failures)"
 	@echo "  test-targets      Build radsan tests"
-	@echo "  test              Build and run radsan tests"
+	@echo "  test              Run radsan tests"
 	@echo "  docker            Build docker image"
 	@echo "  clean             Clean build directory"
 	@echo ""
