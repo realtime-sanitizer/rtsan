@@ -1,4 +1,4 @@
-name: Radsan CI
+name: RADSan Tests
 
 on:
   push:
@@ -7,18 +7,18 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
+  test:
+    name: Test // ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     steps:
     - uses: actions/checkout@v3
-
     - name: Generate
       run: make generate
-
     - name: Build
       run: make clang test-targets
-
     - name: Run unit tests
       run: make test
