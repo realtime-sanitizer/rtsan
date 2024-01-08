@@ -19,6 +19,6 @@ jobs:
     - name: Generate
       run: make generate
     - name: Build
-      run: make clang test-targets
+      run: make clang
     - name: Run unit tests
       run: make test
