@@ -48,10 +48,7 @@ generate: build-folder submodules
 		./llvm-project/llvm; \
 	fi
 
-test-targets: generate
-	cmake --build $(BUILD_DIR) --target TRadsan-$(ARCH)-Test TRadsan-$(ARCH)-NoInstTest -j$(NPROCS)
-
-test: test-targets
+test: generate 
 	cmake --build $(BUILD_DIR) --target check-radsan -j$(NPROCS)
 
 check-compiler-rt: generate
@@ -63,7 +60,7 @@ docker:
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: help clang build-folder submodules generate check-compiler-rt test clean docker test-targets
+.PHONY: help clang build-folder submodules generate check-compiler-rt test clean docker 
 
 help:
 	@echo "Usage: make [target]"
@@ -71,10 +68,9 @@ help:
 	@echo "Targets:"
 	@echo "  help              Show this help message"
 	@echo "  generate          Generate build files"
-	@echo "  clang             Build clang and compiler-rt"
+	@echo "  clang             Build clang, compiler-rt and llvm-symbolizer"
 	@echo "  check-compiler-rt Run all compiler-rt tests (extremely slow, may have failures)"
-	@echo "  test-targets      Build radsan tests"
-	@echo "  test              Run radsan tests"
+	@echo "  test              Build and run radsan tests"
 	@echo "  docker            Build docker image"
 	@echo "  clean             Clean build directory"
 	@echo ""
