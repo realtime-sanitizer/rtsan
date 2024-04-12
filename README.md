@@ -87,7 +87,7 @@ which has `clang` (and other `llvm` tooling) with RADSan readily installed.
 docker pull realtimesanitizer/radsan-clang
 ```
 
-You can quickly experiment in your own repository using a shared-volume:
+You can quickly experiment in your own repository using a shared volume:
 
 ```sh
 docker run -v $(pwd):/my_repo -it realtimesanitizer/radsan-clang /bin/bash
@@ -230,9 +230,9 @@ certain special constraints, like if the mutex is never contended (you might be
 re-using multi-threaded code in a single-threaded context), or if it's only
 contended at times when a user is expecting a glitch anyway (if, say, an audio
 device is disconnected). RADSan always assumes the worst, and this may not be
-true for your particular use case. 
+true for your particular use case.
 
-You can turn off RADSan's error detection for such a call by extracting the 
+You can turn off RADSan's error detection for such a call by extracting the
 behavior to a function, and adding adding the `no_sanitize` attribute:
 
 
