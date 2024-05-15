@@ -87,21 +87,18 @@ Like the existing sanitizers, RADSan instruments the user's binary with
 interceptors for blocking functions in libc like `malloc`, `free` and
 `pthread_mutex_lock`. Non-blocking contexts are defined by the user simply by
 marking functions with the `[[clang::nonblocking]]` attribute, at a granularity
-of their choosing. RADSan keeps track of this non-blocking status for all
-threads, and presents an error to the user if a blocking function call is
-intercepted during the execution of a non-blocking function.
+of their choosing.
 
-The RADSan algorithm is straightforwardly implemented in clang's `CodeGen`, and a
-new sanitizer runtime library in compiler-rt. RADSan's additions to `CodeGen`
-signal entry and exit from non-blocking contexts by calling
+The RADSan algorithm is straightforwardly implemented in clang's `CodeGen`, and
+a new `radsan` sanitizer runtime library in `compiler-rt`. RADSan's additions
+to `CodeGen` signal entry and exit from non-blocking contexts by calling
 `radsan_realtime_enter()` at `[[clang::nonblocking]]` function entry points and
 `radsan_realtime_exit()` at all exit points. The runtime library keeps track of
-these calls and intercepts system library functions that are known to be blocking.
-If a blocking function call is made within a non-blocking context, the runtime
-library exits with an error message and stack trace.
+these calls and intercepts system library functions that are known to be
+blocking. If a blocking function call is made within a non-blocking context,
+the runtime library exits with an error message and stack trace.
 
 ![CodeGen and Runtime Overview](./codegen_and_runtime.svg)
-<img src="./codegen_and_runtime.svg">
 
 ## Integration Roadmap
 
