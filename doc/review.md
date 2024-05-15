@@ -91,12 +91,29 @@ of their choosing. RADSan keeps track of this non-blocking status for all
 threads, and presents an error to the user if a blocking function call is
 intercepted during the execution of a non-blocking function.
 
-### System Design
+The RADSan algorithm is straightforwardly implemented in clang's `CodeGen`, and a
+new sanitizer runtime library in compiler-rt. RADSan's additions to `CodeGen`
+signal entry and exit from non-blocking contexts by calling
+`radsan_realtime_enter()` at `[[clang::nonblocking]]` function entry points and
+`radsan_realtime_exit()` at all exit points. The runtime library keeps track of
+these calls and intercepts system library functions that are known to be blocking.
+If a blocking function call is made within a non-blocking context, the runtime
+library exits with an error message and stack trace.
 
-### Components
-
-### Algorithm
-
-### Interception strategy
+![CodeGen and Runtime Overview](./codegen_and_runtime.svg)
+<img src="./codegen_and_runtime.svg">
 
 ## Integration Roadmap
+
+We're planning to submit PRs for the following units of functionality:
+
+- [ ] RADSan backend and unit tests (compiler-rt only)
+- [ ] RADSan CodeGen (clang) and functional (lit) tests (compiler-rt)
+
+We believe that the above will be enough to have a minimum viable featureset.
+We'd like to submit further PRs for the following feature improvements:
+
+- [ ] Error if call to `[[clang::blocking]]` function is called from
+      `[[clang::nonblocking]]` function
+- [ ] Bypass sanitization with `__attribute__(nosanitize("realtime"))`
+- [ ] Configurable behaviour on errors: exit, continue, or ask the user
