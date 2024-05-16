@@ -110,7 +110,7 @@ We're planning to submit PRs for the following units of functionality:
 We believe that the above will be enough to have a minimum viable featureset.
 We'd like to submit further PRs for the following feature improvements:
 
-- [ ] Error if call to `[[clang::blocking]]` function is called from
-      `[[clang::nonblocking]]` function
+- [ ] Addition of a RADSan ignore list for silencing errors
+- [ ] Error if call to `[[clang::blocking]]` function is called from `[[clang::nonblocking]]` function
 - [ ] Bypass sanitization with `__attribute__(nosanitize("realtime"))`
 - [ ] Configurable behaviour on errors: exit, continue, or ask the user
