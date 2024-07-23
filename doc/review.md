@@ -62,9 +62,9 @@ _real-time violations_, and result in a RTSan error like:
 
 ```cpp
 Real-time violation: intercepted call to real-time unsafe function `malloc` in non-blocking context! Stack trace:
-    #0 0x5644f383d78a in rtsan::printStackTrace() /llvm-project/compiler-rt/lib/rtsan/rtsan_stack.cpp:36:5
-    #1 0x5644f383d630 in rtsan::Context::printDiagnostics(char const*) /llvm-project/compiler-rt/lib/rtsan/rtsan_context.cpp:37:3
-    #2 0x5644f383d5d5 in rtsan::Context::exitIfNonblocking(char const*) /llvm-project/compiler-rt/lib/rtsan/rtsan_context.cpp:24:5
+    #0 0x5644f383d78a in __rtsan::printStackTrace() /llvm-project/compiler-rt/lib/rtsan/rtsan_stack.cpp:36:5
+    #1 0x5644f383d630 in __rtsan::Context::printDiagnostics(char const*) /llvm-project/compiler-rt/lib/rtsan/rtsan_context.cpp:37:3
+    #2 0x5644f383d5d5 in __rtsan::Context::exitIfNonblocking(char const*) /llvm-project/compiler-rt/lib/rtsan/rtsan_context.cpp:24:5
     #3 0x5644f383e067 in exitIfNonblocking /llvm-project/compiler-rt/lib/rtsan/rtsan_interceptors.cpp:29:29
     #4 0x5644f383e067 in malloc /llvm-project/compiler-rt/lib/rtsan/rtsan_interceptors.cpp:221:3
     #5 0x7f7a072b798b in operator new(unsigned long) (/lib/x86_64-linux-gnu/libstdc++.so.6+0xae98b) (BuildId: e37fe1a879783838de78cbc8c80621fa685d58a2)
@@ -92,8 +92,8 @@ of their choosing.
 The RTSan algorithm is straightforwardly implemented in clang's `CodeGen`, and
 a new `rtsan` sanitizer runtime library in `compiler-rt`. RTSan's additions
 to `CodeGen` signal entry and exit from non-blocking contexts by calling
-`rtsan_realtime_enter()` at `[[clang::nonblocking]]` function entry points and
-`rtsan_realtime_exit()` at all exit points. The runtime library keeps track of
+`__rtsan_realtime_enter()` at `[[clang::nonblocking]]` function entry points and
+`__rtsan_realtime_exit()` at all exit points. The runtime library keeps track of
 these calls and intercepts system library functions that are known to be
 blocking. If a blocking function call is made within a non-blocking context,
 the runtime library exits with an error message and stack trace.
