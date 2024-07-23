@@ -1,11 +1,11 @@
-# RealtimeSanitizer (RADSan)
+# RealtimeSanitizer (RTSan)
 
 ## Document Purpose
 
 This doc is mostly intended for LLVM project code reviewers, but it's also for
-anyone interested in how RealtimeSanitizer (RADSan) works and how it will be
+anyone interested in how RealtimeSanitizer (RTSan) works and how it will be
 integrated upstream. Its aim is to add higher-level context as a supplement to
-RADSan's upstream pull requests.
+RTSan's upstream pull requests.
 
 ## Background
 
@@ -39,7 +39,7 @@ system, and it may not be obvious why. Even just reaching a thorough
 understanding of what STL features are safe for use in a non-blocking context
 can require significant developer experience.
 
-RealtimeSanitizer (RADSan) provides a means of automatically detecting calls to
+RealtimeSanitizer (RTSan) provides a means of automatically detecting calls to
 blocking functions in algorithms that should be non-blocking. If a user:
 
 1. Marks their real-time functions with the `[[clang::nonblocking]]` attribute:
@@ -58,15 +58,15 @@ clang -fsanitize=realtime main.cpp
 ```
 
 Blocking function calls, like the memory allocation above, are considered
-_real-time violations_, and result in a RADSan error like:
+_real-time violations_, and result in a RTSan error like:
 
 ```cpp
 Real-time violation: intercepted call to real-time unsafe function `malloc` in non-blocking context! Stack trace:
-    #0 0x5644f383d78a in radsan::printStackTrace() /llvm-project/compiler-rt/lib/radsan/radsan_stack.cpp:36:5
-    #1 0x5644f383d630 in radsan::Context::printDiagnostics(char const*) /llvm-project/compiler-rt/lib/radsan/radsan_context.cpp:37:3
-    #2 0x5644f383d5d5 in radsan::Context::exitIfNonblocking(char const*) /llvm-project/compiler-rt/lib/radsan/radsan_context.cpp:24:5
-    #3 0x5644f383e067 in exitIfNonblocking /llvm-project/compiler-rt/lib/radsan/radsan_interceptors.cpp:29:29
-    #4 0x5644f383e067 in malloc /llvm-project/compiler-rt/lib/radsan/radsan_interceptors.cpp:221:3
+    #0 0x5644f383d78a in rtsan::printStackTrace() /llvm-project/compiler-rt/lib/rtsan/rtsan_stack.cpp:36:5
+    #1 0x5644f383d630 in rtsan::Context::printDiagnostics(char const*) /llvm-project/compiler-rt/lib/rtsan/rtsan_context.cpp:37:3
+    #2 0x5644f383d5d5 in rtsan::Context::exitIfNonblocking(char const*) /llvm-project/compiler-rt/lib/rtsan/rtsan_context.cpp:24:5
+    #3 0x5644f383e067 in exitIfNonblocking /llvm-project/compiler-rt/lib/rtsan/rtsan_interceptors.cpp:29:29
+    #4 0x5644f383e067 in malloc /llvm-project/compiler-rt/lib/rtsan/rtsan_interceptors.cpp:221:3
     #5 0x7f7a072b798b in operator new(unsigned long) (/lib/x86_64-linux-gnu/libstdc++.so.6+0xae98b) (BuildId: e37fe1a879783838de78cbc8c80621fa685d58a2)
     #6 0x5644f3861d7f in std::__new_allocator<float>::allocate(unsigned long, void const*) (/root/test/a.out+0x2ad7f)
     #7 0x5644f3861d10 in std::allocator_traits<std::allocator<float>>::allocate(std::allocator<float>&, unsigned long) (/root/test/a.out+0x2ad10)
@@ -83,17 +83,17 @@ Real-time violation: intercepted call to real-time unsafe function `malloc` in n
 
 ## How it works
 
-Like the existing sanitizers, RADSan instruments the user's binary with
+Like the existing sanitizers, RTSan instruments the user's binary with
 interceptors for blocking functions in libc like `malloc`, `free` and
 `pthread_mutex_lock`. Non-blocking contexts are defined by the user simply by
 marking functions with the `[[clang::nonblocking]]` attribute, at a granularity
 of their choosing.
 
-The RADSan algorithm is straightforwardly implemented in clang's `CodeGen`, and
-a new `radsan` sanitizer runtime library in `compiler-rt`. RADSan's additions
+The RTSan algorithm is straightforwardly implemented in clang's `CodeGen`, and
+a new `rtsan` sanitizer runtime library in `compiler-rt`. RTSan's additions
 to `CodeGen` signal entry and exit from non-blocking contexts by calling
-`radsan_realtime_enter()` at `[[clang::nonblocking]]` function entry points and
-`radsan_realtime_exit()` at all exit points. The runtime library keeps track of
+`rtsan_realtime_enter()` at `[[clang::nonblocking]]` function entry points and
+`rtsan_realtime_exit()` at all exit points. The runtime library keeps track of
 these calls and intercepts system library functions that are known to be
 blocking. If a blocking function call is made within a non-blocking context,
 the runtime library exits with an error message and stack trace.
@@ -104,13 +104,13 @@ the runtime library exits with an error message and stack trace.
 
 We're planning to submit PRs for the following units of functionality:
 
-- [x] RADSan backend and unit tests (compiler-rt only). Completed in this review: https://github.com/llvm/llvm-project/pull/92460
-- [ ] RADSan CodeGen (clang) attributes (llvm) and functional (lit) tests (compiler-rt)
+- [x] RTSan backend and unit tests (compiler-rt only). Completed in this review: https://github.com/llvm/llvm-project/pull/92460
+- [ ] RTSan CodeGen (clang) attributes (llvm) and functional (lit) tests (compiler-rt)
 
 We believe that the above will be enough to have a minimum viable featureset.
 We'd like to submit further PRs for the following feature improvements:
 
 - [ ] Bypass sanitization with `__attribute__(nosanitize("realtime"))`
-- [ ] Addition of a RADSan ignore list for silencing errors
+- [ ] Addition of a RTSan ignore list for silencing errors
 - [ ] Error if call to `[[clang::blocking]]` function is called from `[[clang::nonblocking]]` function
 - [ ] Configurable behaviour on errors: exit, continue, or ask the user
