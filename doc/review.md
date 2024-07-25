@@ -105,7 +105,9 @@ the runtime library exits with an error message and stack trace.
 We're planning to submit PRs for the following units of functionality:
 
 - [x] RTSan backend and unit tests (compiler-rt only). Completed in this review: https://github.com/llvm/llvm-project/pull/92460
-- [ ] RTSan CodeGen (clang) attributes (llvm) and functional (lit) tests (compiler-rt)
+- [ ] [LLVM] RTSan nonblocking attribute and PassManager pass
+- [ ] [clang] Adding the codegen and driver changes to allow for -fsanitize=realtime
+- [ ] [compiler-rt] Add end-to-end lit tests to confirm the previous steps are working
 
 We believe that the above will be enough to have a minimum viable featureset.
 We'd like to submit further PRs for the following feature improvements:
