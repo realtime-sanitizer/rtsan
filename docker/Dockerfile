@@ -5,7 +5,7 @@
 #    Copyright 2023 David Trevelyan & Alistair Barker
 #    Subject to GNU General Public License (GPL) v3.0
 #
-FROM ubuntu:22.04 AS build
+FROM ubuntu:24.04 AS build
 RUN apt-get update && apt-get install -y clang cmake
 COPY llvm-project llvm-project
 
@@ -20,8 +20,8 @@ RUN CC=clang CXX=clang++ cmake \
 RUN make -j`nproc` compiler-rt clang llvm-symbolizer
 RUN make DESTDIR=./clang-install -j`nproc` install
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 COPY --from=build llvm-project/build/clang-install /
-RUN apt-get update && apt-get install -y libstdc++-12-dev binutils
+RUN apt-get update && apt-get install -y libstdc++-14-dev binutils
 ENV CC=clang
 ENV CXX=clang++

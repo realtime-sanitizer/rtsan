@@ -48,8 +48,8 @@ generate: build-folder submodules
 		./llvm-project/llvm; \
 	fi
 
-test: generate 
-	cmake --build $(BUILD_DIR) --target check-radsan -j$(NPROCS)
+test: generate
+	cmake --build $(BUILD_DIR) --target check-rtsan -j$(NPROCS)
 
 check-compiler-rt: generate
 	cmake --build $(BUILD_DIR) --target check-compiler-rt -j$(NPROCS)
@@ -60,7 +60,7 @@ docker:
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: help clang build-folder submodules generate check-compiler-rt test clean docker 
+.PHONY: help clang build-folder submodules generate check-compiler-rt test clean docker
 
 help:
 	@echo "Usage: make [target]"
