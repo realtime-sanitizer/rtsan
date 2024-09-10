@@ -57,16 +57,13 @@ Real-time violation: intercepted call to real-time unsafe function `malloc` in r
 
 1. [Getting RTSan](#getting-rtsan)
    1. [Docker](#docker)
-   2. [Building LLVM 20 From Source](#building-from-source)
+   2. [Building LLVM 20 from source](#building-from-source)
    3. [Windows](#windows)
-2. [Usage](#usage)
-   1. [CMake](#cmake)
-3. [Configuration](#configuration)
-   1. [Disabling RTSan](#disabling-rtsan)
-   2. [Error Modes](#error-modes)
+2. [Documentation](#documentation)
+3. [CMake](#cmake)
 4. [Using RTSan with other compilers](#using-rtsan-with-other-compilers)
 5. [How it works](#how-it-works)
-6. [Upstream Integration Roadmap](#roadmap)
+6. [Upstream integration roadmap](#roadmap)
 7. [Contact](#contact)
 
 # Getting RTSan
@@ -103,26 +100,27 @@ RUN apt-get update && apt-get install -y git cmake vim
 
 ## Building LLVM 20 from source
 
-RTSan is now part of LLVM 20; please see the build instructions [here](https://llvm.org/docs/CMake.html) for more information.
+RTSan is now part of LLVM 20; please see the build instructions
+[here](https://llvm.org/docs/CMake.html) for more information.
 
 ## Windows
 
-Apologies, RealtimeSanitizer does not yet support Windows. We very much welcome contributions, so please [contact us](#contact) if you're interested.
+Apologies, RealtimeSanitizer does not yet support Windows. We very much welcome
+contributions, so please [contact us](#contact) if you're interested.
 
-# Usage
+# Documentation
 
-Using RTSan is very simple. When compiling with LLVM 20, only two steps are required:
+A full list of features and instructions for configuring RealtimeSanitizer can
+be found in the official docs [here](https://clang.llvm.org/docs/RealtimeSanitizer.html).
 
-1. mark your real-time algorithm entrypoint function with the `[[clang::nonblocking]]` attribute, and
-2. add `-fsanitize=realtime` to your compile and link flags.
+# CMake
 
-## CMake
-
-LLVM 20 `clang` is installed to `/usr/local` in the RTSan Docker image, and
-CMake will automatically detect it. However, if you've built RTSan from source,
-you'll need to instruct CMake to use it by either setting the `CC` and `CXX`
-environment variables or passing the `CMAKE_C_COMPILER` and
-`CMAKE_CXX_COMPILER` options to CMake as arguments.
+LLVM 20 `clang` is installed to `/usr/local` in the [RTSan Docker
+image](https://hub.docker.com/r/realtimesanitizer/rtsan-clang), and CMake will
+automatically detect it. However, if you've built the latest LLVM from source,
+you'll need to instruct CMake to use the right version of `clang` by either i)
+setting the `CC` and `CXX` environment variables or ii) passing the
+`CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER` options to CMake as arguments.
 
 Adding the compile and link flag `-fsanitize=realtime` can be done however
 works best for your project. One unintrusive option is to pass them as
@@ -145,44 +143,6 @@ RTSan's algorithm consists of two parts that work together:
   - keeps track of the real-time context,
   - detects calls to system library functions that are known to block, and
   - raises an error if a blocking library function is called in a real-time context.
-
-# Configuration
-
-## Disabling RTSan
-
-You might find a case where you disagree with RTSan's assessment of real-time
-safety. Consider the case of locking and unlocking a mutex; these operations
-can block if the mutex is contended, and common advice is to avoid them in
-real-time contexts. However, their use can be nonblocking in certain special
-circumstances, like if the mutex is never contended (you might be re-using
-multi-threaded code in a single-threaded context), or if it's only contended at
-times when your system does not require real-time deadlines to be met. RTSan
-pessimistically assumes the worst, which may not be true for your particular
-use case.
-
-You can temporarily disable RTSan inside any scope using an instance of the
-RAII class `__rtsan::ScopedDisabler`:
-
-```cpp
-#include <sanitizer/rtsan_interface.h> // This header is installed with clang
-
-float process (float x) [[clang::nonblocking]]
-{
-    ...
-    {
-        __rtsan::ScopedDisabler _;
-        mutex_.lock(); // I know this is uncontended, thus real-time safe!
-    }
-    ...
-}
-```
-
-## Error modes
-
-At this time, RealtimeSanitizer has only a single mode of operation when a
-real-time violation is detected: the program will print an error message and
-terminate. More error modes are being integrated into the upstream project, and
-they will be documented here when they've been released.
 
 # Using RTSan with other compilers
 
