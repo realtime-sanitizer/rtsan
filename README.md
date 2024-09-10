@@ -148,9 +148,9 @@ RTSan's algorithm consists of two parts that work together:
 
 The recommended way to use RTSan is to use it with LLVM 20 directly, as described elsewhere in this document. The rest of this section describes a hack which may or may not continue to work in the future.
 
-If you are in a position where you cannot use this compiler, and instead rely on AppleClang or GCC, you can still use RTSan by directly linking in the runtime.
+If you are in a position where you cannot use this compiler and instead rely on AppleClang or GCC, you can still use RTSan by directly linking in the runtime in directly.
 
-To do so, build the RTSan runtime by following the instructions in the [official docs](https://clang.llvm.org/docs/RealtimeSanitizer.html).
+First, build the RTSan runtime by following the instructions in the [official docs](https://clang.llvm.org/docs/RealtimeSanitizer.html).
 
 From there, find the RTSan runtime library:
 ```
@@ -167,7 +167,7 @@ From there, find the RTSan runtime library:
 
 And link it in to your binary.
 
-In your code, you must include `include/rtsan_standalone/rtsan_standalone.h`, provided in this repo, initialize RTSan, and put `__rtsan::ScopedSanitizeRealtime()` in places where you would typically use `[[clang::nonblocking]]` (in the top level of your real-time callback).
+In your code, you must include `include/rtsan_standalone/rtsan_standalone.h`, provided in this repo. Initialize RTSan, and put `__rtsan::ScopedSanitizeRealtime()` in places where you would normally use `[[clang::nonblocking]]` (in the top level of your real-time callback).
 
 ```cpp
 #include "rtsan_standalone/rtsan_standalone.h"
@@ -191,7 +191,7 @@ clang++ main.cpp -D__SANITIZE_REALTIME
 
 Without this flag, each of these aforementioned constructs will compile to a no-op, and the sanitizer will be disabled.
 
-This header also defines `__rtsan::ScopedDisabler()`, which allows for disabling the sanitizer in a specific scope. Please see the official docs for more details.
+This header also defines `__rtsan::ScopedDisabler()`, which allows for disabling the sanitizer in a specific scope. Please see the official docs for more information.
 
 # Upstream Integration Roadmap
 
