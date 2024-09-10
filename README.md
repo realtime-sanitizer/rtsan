@@ -152,22 +152,35 @@ If you are in a position where you cannot use this compiler and instead rely on 
 
 First, build the RTSan runtime by following the instructions in the [official docs](https://clang.llvm.org/docs/RealtimeSanitizer.html).
 
-From there, find the RTSan runtime library:
+From there, find the RTSan runtime library and link it to your binary. This differs based on system:
 ```
 > cd $BUILD_DIR_MAC
 > find . -name "*rtsan_osx*dylib"
 ./lib/clang/20/lib/darwin/libclang_rt.rtsan_osx_dynamic.dylib
+
+...
+> cat your_proj/CMakeLists.txt
+...
+target_link_libraries(helloWorld PRIVATE
+  libclang_rt.rtsan_osx_dynamic.dylib
+)
 ```
 
 ```
 > cd $BUILD_DIR_LINUX
 > find . -name "libclang_rt.rtsan.a"
 ./lib/clang/20/lib/aarch64-unknown-linux-gnu/libclang_rt.rtsan.a
+
+...
+> cat your_proj/CMakeLists.txt
+...
+target_link_libraries(helloWorld PRIVATE
+  libclang_rt.rtsan.a
+  pthread
+  dl
+)
 ```
-
-And link it in to your binary.
-
-In your code, you must include `include/rtsan_standalone/rtsan_standalone.h`, provided in this repo. Initialize RTSan, and put `__rtsan::ScopedSanitizeRealtime()` in places where you would normally use `[[clang::nonblocking]]` (in the top level of your real-time callback).
+In your code, you must `#include "include/rtsan_standalone/rtsan_standalone.h"`, provided in this repo. Initialize RTSan, and put `__rtsan::ScopedSanitizeRealtime()` in places where you would normally use `[[clang::nonblocking]]` (in the top level of your real-time callback).
 
 ```cpp
 #include "rtsan_standalone/rtsan_standalone.h"
