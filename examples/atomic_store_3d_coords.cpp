@@ -1,9 +1,8 @@
-/**
-    This file is part of the RealtimeSanitizer (RADSan) project.
-    https://github.com/realtime-sanitizer/radsan
+/*
+    This file is part of the RealtimeSanitizer (RTSan) project, under the
+    Apache v2.0 license.
 
-    Copyright 2023 David Trevelyan & Alistair Barker
-    Subject to GNU General Public License (GPL) v3.0
+    https://github.com/realtime-sanitizer/rtsan
 */
 
 #include <atomic>
@@ -17,7 +16,7 @@ struct Coords {
 
 std::atomic<Coords> coords;
 
-[[clang::realtime]] double process() {
+double process() [[clang::nonblocking]] {
   coords.store({4.1, 4.4, 5.2});
   return coords.load().x;
 }
