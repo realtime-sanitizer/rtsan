@@ -146,6 +146,7 @@ RTSan's algorithm consists of two parts that work together:
 
 # Using RTSan with other compilers
 
+
 The recommended way to use RTSan is to use it with LLVM 20 directly, as described elsewhere in this document. The rest of this section describes a hack which may or may not continue to work in the future.
 
 If you are in a position where you cannot use this compiler and instead rely on AppleClang or GCC, you can still use RTSan by directly linking in the runtime in directly.
