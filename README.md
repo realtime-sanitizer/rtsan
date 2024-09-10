@@ -146,9 +146,7 @@ RTSan's algorithm consists of two parts that work together:
 
 # Using RTSan with other compilers
 
-Yes, it's possible. Here's how.
-
-(TODO)
+Yes, it's possible. We're working on instructions for doing so now, and will document it all when they're ready.
 
 # Upstream Integration Roadmap
 
