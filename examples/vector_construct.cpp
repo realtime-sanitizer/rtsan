@@ -1,15 +1,14 @@
-/**
-    This file is part of the RealtimeSanitizer (RADSan) project.
-    https://github.com/realtime-sanitizer/radsan
+/*
+    This file is part of the RealtimeSanitizer (RTSan) project, under the
+    Apache v2.0 license.
 
-    Copyright 2023 David Trevelyan & Alistair Barker
-    Subject to GNU General Public License (GPL) v3.0
+    https://github.com/realtime-sanitizer/rtsan
 */
 
 #include <vector>
 #include <iostream>
 
-[[clang::realtime]] float process() {
+float process() [[clang::nonblocking]] {
   auto vec = std::vector<float>(3);
   return vec[1];
 }

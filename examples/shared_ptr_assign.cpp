@@ -1,9 +1,8 @@
-/**
-    This file is part of the RealtimeSanitizer (RADSan) project.
-    https://github.com/realtime-sanitizer/radsan
+/*
+    This file is part of the RealtimeSanitizer (RTSan) project, under the
+    Apache v2.0 license.
 
-    Copyright 2023 David Trevelyan & Alistair Barker
-    Subject to GNU General Public License (GPL) v3.0
+    https://github.com/realtime-sanitizer/rtsan
 */
 
 #include <memory>
@@ -11,7 +10,7 @@
 
 std::shared_ptr<int> ptr_to_int = std::make_shared<int>(3);
 
-[[clang::realtime]] int process() {
+int process() [[clang::nonblocking]] {
   auto new_ptr = ptr_to_int;
   (*new_ptr)++;
   return *new_ptr;
