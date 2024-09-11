@@ -191,7 +191,7 @@ int main() {
     ...
 }
 
-void procesAudio() {
+void my_real_time_function() {
     __rtsan::ScopedSanitizeRealtime ssr;
     ...
 }
