@@ -146,7 +146,66 @@ RTSan's algorithm consists of two parts that work together:
 
 # Using RTSan with other compilers
 
-Yes, it's possible. We're working on instructions for doing so now, and will document it all when they're ready.
+
+The recommended way to use RTSan is to use it with LLVM 20 directly, as described elsewhere in this document. The rest of this section describes a hack which may or may not continue to work in the future.
+
+If you are in a position where you cannot use this compiler and instead rely on AppleClang or GCC, you can still use RTSan by directly linking in the runtime in directly.
+
+First, build the RTSan runtime by following the instructions in the [official docs](https://clang.llvm.org/docs/RealtimeSanitizer.html).
+
+From there, find the RTSan runtime library and link it to your binary. This differs based on system:
+```
+> cd $BUILD_DIR_MAC
+> find . -name "*rtsan_osx*dylib"
+./lib/clang/20/lib/darwin/libclang_rt.rtsan_osx_dynamic.dylib
+
+...
+> cat your_proj/CMakeLists.txt
+...
+target_link_libraries(helloWorld PRIVATE
+  libclang_rt.rtsan_osx_dynamic.dylib
+)
+```
+
+```
+> cd $BUILD_DIR_LINUX
+> find . -name "libclang_rt.rtsan.a"
+./lib/clang/20/lib/aarch64-unknown-linux-gnu/libclang_rt.rtsan.a
+
+...
+> cat your_proj/CMakeLists.txt
+...
+target_link_libraries(helloWorld PRIVATE
+  libclang_rt.rtsan.a
+  pthread
+  dl
+)
+```
+In your code, you must `#include "include/rtsan_standalone/rtsan_standalone.h"`, provided in this repo. Initialize RTSan, and put `__rtsan::ScopedSanitizeRealtime()` in places where you would normally use `[[clang::nonblocking]]` (in the top level of your real-time callback).
+
+```cpp
+#include "rtsan_standalone/rtsan_standalone.h"
+
+int main() {
+    __rtsan::Initialize();
+    ...
+}
+
+void procesAudio() {
+    __rtsan::ScopedSanitizeRealtime ssr;
+    ...
+}
+```
+
+To "enable" the sanitizer, you must compile your code defining `__SANITIZE_REALTIME`, e.g.
+
+```
+clang++ main.cpp -D__SANITIZE_REALTIME
+```
+
+Without this flag, each of these aforementioned constructs will compile to a no-op, and the sanitizer will be disabled.
+
+This header also defines `__rtsan::ScopedDisabler()`, which allows for disabling the sanitizer in a specific scope. Please see the official docs for more information.
 
 # Upstream Integration Roadmap
 
