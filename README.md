@@ -211,11 +211,10 @@ This header also defines `__rtsan::ScopedDisabler()`, which allows for disabling
 
 - [x] Minimum viable functionality: raise an error if a blocking system library function is called in a real-time context (e.g. `malloc`)
 - [x] Ability to disable error reporting in a specified scope (`__rtsan::ScopedDisabler`)
-- [ ] Raise an error if a function attributed with `[[clang::blocking]]` is called in a real-time context
-  - Integration upstream is [in progress](https://github.com/llvm/llvm-project/pull/106754)
-- [ ] `Continue` error mode
-  - Integration upstream is [in progress](https://github.com/llvm/llvm-project/pull/107174)
+- [x] Raise an error if a function attributed with `[[clang::blocking]]` is called in a real-time context
+- [x] `Continue` error mode - using `halt_on_error` runtime flag
 - [ ] Suppressing specific errors
+    - In progress [here](https://github.com/llvm/llvm-project/pull/111608)
 
 # Contact
 
