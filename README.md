@@ -181,7 +181,7 @@ target_link_libraries(helloWorld PRIVATE
   dl
 )
 ```
-In your code, you must `#include "include/rtsan_standalone/rtsan_standalone.h"`, provided in this repo. Initialize RTSan, and put `__rtsan::ScopedSanitizeRealtime()` in places where you would normally use `[[clang::nonblocking]]` (in the top level of your real-time callback).
+In your code, you must `#include "rtsan_standalone/rtsan_standalone.h"`, provided in this repo. Initialize RTSan, and put `__rtsan::ScopedSanitizeRealtime()` in places where you would normally use `[[clang::nonblocking]]` (in the top level of your real-time callback).
 
 ```cpp
 #include "rtsan_standalone/rtsan_standalone.h"
