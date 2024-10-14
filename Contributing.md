@@ -6,6 +6,7 @@ RealtimeSanitizer is a part of LLVM, meaning that when in conflict, the two foll
 
 1. [Contributing to LLVM](https://llvm.org/docs/Contributing.html)
 2. [LLVM Coding Standards](https://llvm.org/docs/CodingStandards.html)
+3. [Getting Started with the LLVM System](https://llvm.org/docs/GettingStarted.html)
 
 We highly recommend reading these two guides, as they have a lot of things not covered in this document. 
 
