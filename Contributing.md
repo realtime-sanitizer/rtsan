@@ -1,3 +1,4 @@
+
 # Contributing to RealtimeSanitizer
 
 This document describes some helpful tips and tricks for contributing to RealtimeSanitizer. 
@@ -11,6 +12,21 @@ RealtimeSanitizer is a part of LLVM, meaning that when in conflict, the two foll
 We highly recommend reading these two guides, as they have a lot of things not covered in this document. 
 
 The goal of this document is to be a minimal addition to the above, providing specific advice for developing RealtimeSanitizer.
+
+# How to get in touch
+
+For RTSan specific development, you can ask questions and collaborate with other developers on the  [RealtimeSanitizer discord server](https://discord.com/invite/DZqjbmSZzZ).
+
+For more general questions:
+
+* [LLVM Discord server](https://discord.com/invite/DZqjbmSZzZ)
+* [LLVM Discourse forum](https://discourse.llvm.org/)
+
+# What should I work on?
+
+Grab an issue on the [RTSan trello board](https://trello.com/b/6wpFlkqU/rtsan) by reaching out to Chris or David.
+
+Good first issues are marked in yellow.
 
 # Building and running tests
 It is highly recommended you use [ninja](https://ninja-build.org/) and [ccache](https://ccache.dev/) to build LLVM. This codebase is **LARGE** so any time saved compiling is worth it.
