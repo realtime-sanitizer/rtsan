@@ -197,6 +197,16 @@ void my_real_time_function() {
 }
 ```
 
+To indicate that a function is not real-time safe, add the `__RTSAN_NOTIFY_BLOCKING_CALL()` macro to the first line of that function. This is analogous to marking the function `[[clang::blocking]]`
+
+```cpp
+
+void my_unsafe_spinlock() {
+    __RTSAN_NOTIFY_BLOCKING_CALL();
+    ...
+}
+```
+
 To "enable" the sanitizer, you must compile your code defining `__SANITIZE_REALTIME`, e.g.
 
 ```
