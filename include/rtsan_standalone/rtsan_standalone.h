@@ -90,7 +90,7 @@ private:
   ScopedDisabler &operator=(const ScopedDisabler &);
 #endif // __cplusplus >= 201103L
 
-#define __RTSAN_MARK_FUNCTION_BLOCKING()  \
+#define __RTSAN_NOTIFY_BLOCKING_CALL()  \
   __rtsan_notify_blocking_call(__func__)
 };
 
@@ -128,7 +128,7 @@ private:
 #endif // __cplusplus >= 201103L
 
 
-#define __RTSAN_MARK_FUNCTION_BLOCKING() ((void)0)
+#define __RTSAN_NOTIFY_BLOCKING_CALL() ((void)0)
 };
 
 #endif // defined(__SANITIZE_REALTIME)
