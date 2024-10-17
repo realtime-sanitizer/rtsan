@@ -103,11 +103,15 @@ More info in [LLVM - How To Submit At Patch](https://llvm.org/docs/Contributing.
 ```
 
 ## Code formatting
-Code should be formatted before submission, or else you will get a build failure. `git-clang-tidy` is great for this:
+Code should be formatted before submission, or else you will get a build failure. `git-clang-format` is great for this:
 
 ```
-git-clang-tidy main
+git-clang-format main
 ```
+
+The regular `clang-format` should be avoided, as it can alter sections of the code that were not changed in your current PR.
+
+
 
 Changes should always include a unit test, except if submitting an NFC (no functional change) PR.
 
