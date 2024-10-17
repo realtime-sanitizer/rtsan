@@ -1,4 +1,4 @@
-//===-- rtsan.h -------------------------------------------------*- C++ -*-===//
+//===-- rtsan_standalone.h --------------------------------------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -44,6 +44,11 @@ void __rtsan_enable(void);
 // other rtsan functions are called.
 void __rtsan_ensure_initialized(void);
 
+// Allows the user to specify a function as not-real-time-safe
+// Including this in the first line of a function definition is
+// analogous to marking a function `[[clang::blocking]]`
+void __rtsan_notify_blocking_call(const char *blocking_function_name);
+
 #ifdef __cplusplus
 } // extern "C"
 
@@ -84,6 +89,9 @@ private:
   ScopedDisabler(const ScopedDisabler &);
   ScopedDisabler &operator=(const ScopedDisabler &);
 #endif // __cplusplus >= 201103L
+
+#define __RTSAN_NOTIFY_BLOCKING_CALL()  \
+  __rtsan_notify_blocking_call(__func__)
 };
 
 #else
@@ -118,6 +126,9 @@ private:
   ScopedDisabler(const ScopedDisabler &);
   ScopedDisabler &operator=(const ScopedDisabler &);
 #endif // __cplusplus >= 201103L
+
+
+#define __RTSAN_NOTIFY_BLOCKING_CALL() ((void)0)
 };
 
 #endif // defined(__SANITIZE_REALTIME)
