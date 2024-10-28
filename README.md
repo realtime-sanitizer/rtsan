@@ -37,20 +37,21 @@ At run-time, real-time violations are presented with a stack trace:
 
 ```sh
 > ./a.out
-Real-time violation: intercepted call to real-time unsafe function `malloc` in real-time context! Stack trace:
-    #0 0x5644f383e067 in malloc /llvm-project/compiler-rt/lib/rtsan/rtsan_interceptors.cpp:221:3
-    #1 0x7f7a072b798b in operator new(unsigned long) (/lib/x86_64-linux-gnu/libstdc++.so.6+0xae98b) (BuildId: e37fe1a879783838de78cbc8c80621fa685d58a2)
-    #2 0x5644f3861d7f in std::__new_allocator<float>::allocate(unsigned long, void const*) (/root/test/a.out+0x2ad7f)
-    #3 0x5644f3861d10 in std::allocator_traits<std::allocator<float>>::allocate(std::allocator<float>&, unsigned long) (/root/test/a.out+0x2ad10)
-    #4 0x5644f3861ccf in std::_Vector_base<float, std::allocator<float>>::_M_allocate(unsigned long) (/root/test/a.out+0x2accf)
-    #5 0x5644f3861c20 in std::_Vector_base<float, std::allocator<float>>::_M_create_storage(unsigned long) (/root/test/a.out+0x2ac20)
-    #6 0x5644f38619b1 in std::_Vector_base<float, std::allocator<float>>::_Vector_base(unsigned long, std::allocator<float> const&) (/root/test/a.out+0x2a9b1)
-    #7 0x5644f3861838 in std::vector<float, std::allocator<float>>::vector(unsigned long, std::allocator<float> const&) (/root/test/a.out+0x2a838)
-    #8 0x5644f3861767 in process(processing_data const&) (/root/test/a.out+0x2a767)
-    #9 0x5644f38617d0 in main (/root/test/a.out+0x2a7d0)
-    #10 0x7f7a06eefd8f  (/lib/x86_64-linux-gnu/libc.so.6+0x29d8f) (BuildId: a43bfc8428df6623cd498c9c0caeb91aec9be4f9)
-    #11 0x7f7a06eefe3f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29e3f) (BuildId: a43bfc8428df6623cd498c9c0caeb91aec9be4f9)
-    #12 0x5644f383d4a4 in _start (/root/test/a.out+0x64a4)
+==1==ERROR: RealtimeSanitizer: unsafe-library-call
+Intercepted call to real-time unsafe function `malloc` in real-time context!
+    #0 0x591265778cb8 in malloc /root/llvm-project/compiler-rt/lib/rtsan/rtsan_interceptors_posix.cpp:444:3
+    #1 0x73a58271117b in operator new(unsigned long) (/test/lib/libstdc++.so.6+0xc517b)
+    #2 0x59126579f576 in std::__new_allocator<float>::allocate(unsigned long, void const*) /test/include/c++/15.0.0/bits/new_allocator.h:151:27
+    #3 0x59126579f576 in std::allocator_traits<std::allocator<float>>::allocate(std::allocator<float>&, unsigned long) /test/include/c++/15.0.0/bits/alloc_traits.h:614:20
+    #4 0x59126579f576 in std::_Vector_base<float, std::allocator<float>>::_M_allocate(unsigned long) /test/include/c++/15.0.0/bits/stl_vector.h:384:20
+    #5 0x59126579f576 in std::_Vector_base<float, std::allocator<float>>::_M_create_storage(unsigned long) /test/include/c++/15.0.0/bits/stl_vector.h:402:33
+    #6 0x59126579f576 in std::_Vector_base<float, std::allocator<float>>::_Vector_base(unsigned long, std::allocator<float> const&) /test/include/c++/15.0.0/bits/stl_vector.h:338:9
+    #7 0x59126579f576 in std::vector<float, std::allocator<float>>::vector(unsigned long, std::allocator<float> const&) /test/include/c++/15.0.0/bits/stl_vector.h:584:9
+    #8 0x59126579f4ed in process(processing_data const&) /app/example.cpp:10:14
+    #9 0x59126579f535 in main /app/example.cpp:15:5
+    #10 0x73a582229d8f  (/lib/x86_64-linux-gnu/libc.so.6+0x29d8f)
+    #11 0x73a582229e3f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29e3f)
+    #12 0x591265777434 in _start (/app/output.s+0x6434)
 ```
 
 # Table Of Contents
@@ -146,7 +147,6 @@ RTSan's algorithm consists of two parts that work together:
 
 # Using RTSan with other compilers
 
-
 The recommended way to use RTSan is to use it with LLVM 20 directly, as described elsewhere in this document. The rest of this section describes a hack which may or may not continue to work in the future.
 
 If you are in a position where you cannot use this compiler and instead rely on AppleClang or GCC, you can still use RTSan by directly linking in the runtime in directly.
@@ -154,6 +154,7 @@ If you are in a position where you cannot use this compiler and instead rely on 
 First, build the RTSan runtime by following the instructions in the [official docs](https://clang.llvm.org/docs/RealtimeSanitizer.html).
 
 From there, find the RTSan runtime library and link it to your binary. This differs based on system:
+
 ```
 > cd $BUILD_DIR_MAC
 > find . -name "*rtsan_osx*dylib"
@@ -181,6 +182,7 @@ target_link_libraries(helloWorld PRIVATE
   dl
 )
 ```
+
 In your code, you must `#include "rtsan_standalone/rtsan_standalone.h"`, provided in this repo. Initialize RTSan, and put `__rtsan::ScopedSanitizeRealtime()` in places where you would normally use `[[clang::nonblocking]]` (in the top level of your real-time callback).
 
 ```cpp
@@ -216,15 +218,6 @@ clang++ main.cpp -D__SANITIZE_REALTIME
 Without this flag, each of these aforementioned constructs will compile to a no-op, and the sanitizer will be disabled.
 
 This header also defines `__rtsan::ScopedDisabler()`, which allows for disabling the sanitizer in a specific scope. Please see the official docs for more information.
-
-# Upstream Integration Roadmap
-
-- [x] Minimum viable functionality: raise an error if a blocking system library function is called in a real-time context (e.g. `malloc`)
-- [x] Ability to disable error reporting in a specified scope (`__rtsan::ScopedDisabler`)
-- [x] Raise an error if a function attributed with `[[clang::blocking]]` is called in a real-time context
-- [x] `Continue` error mode - using `halt_on_error` runtime flag
-- [ ] Suppressing specific errors
-    - In progress [here](https://github.com/llvm/llvm-project/pull/111608)
 
 # Contact
 
