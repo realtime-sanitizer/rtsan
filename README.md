@@ -223,8 +223,7 @@ This header also defines `__rtsan::ScopedDisabler()`, which allows for disabling
 - [x] Ability to disable error reporting in a specified scope (`__rtsan::ScopedDisabler`)
 - [x] Raise an error if a function attributed with `[[clang::blocking]]` is called in a real-time context
 - [x] `Continue` error mode - using `halt_on_error` runtime flag
-- [ ] Suppressing specific errors
-    - In progress [here](https://github.com/llvm/llvm-project/pull/111608)
+- [x] Suppressing specific errors
 
 # Contact
 
