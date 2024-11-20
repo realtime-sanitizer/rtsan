@@ -114,6 +114,12 @@ contributions, so please [contact us](#contact) if you're interested.
 A full list of features and instructions for configuring RealtimeSanitizer can
 be found in the official docs [here](https://clang.llvm.org/docs/RealtimeSanitizer.html).
 
+We have given various talks about RTSan at software engineering conferences. Note that the older
+the talk is, the more likely it is to have stale info in it.
+
+* [CppCon 2024](https://www.youtube.com/watch?v=KvhgNdxX6Uw)
+* [CppCast Podcast](https://cppcast.com/realtime_sanitizer_and_the_performance_constraints_attributes/)
+
 # CMake
 
 LLVM 20 `clang` is installed to `/usr/local` in the [RTSan Docker
