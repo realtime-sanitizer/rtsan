@@ -151,7 +151,7 @@ RTSan's algorithm consists of two parts that work together:
   - detects calls to system library functions that are known to block, and
   - raises an error if a blocking library function is called in a real-time context.
 
-# Using RTSan with other compilers
+# Using RTSan Standalone (with compilers other than clang 20)
 
 The recommended way to use RTSan is to use it with LLVM 20 directly, as described elsewhere in this document. The rest of this section describes a hack which may or may not continue to work in the future.
 
