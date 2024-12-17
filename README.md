@@ -58,14 +58,13 @@ Intercepted call to real-time unsafe function `malloc` in real-time context!
 
 1. [Getting RTSan](#getting-rtsan)
    1. [Docker](#docker)
-   2. [Building LLVM 20 from source](#building-from-source)
+   2. [Building LLVM 20 from source](#building-llvm-20-from-source)
    3. [Windows](#windows)
 2. [Documentation](#documentation)
 3. [CMake](#cmake)
-4. [Using RTSan with other compilers](#using-rtsan-with-other-compilers)
-5. [How it works](#how-it-works)
-6. [Upstream integration roadmap](#roadmap)
-7. [Contact](#contact)
+4. [How it works](#how-it-works)
+5. [Using RTSan Standalone (with compilers other than clang 20)](#using-rtsan-standalone-with-compilers-other-than-clang-20)
+6. [Contact](#contact)
 
 # Getting RTSan
 
