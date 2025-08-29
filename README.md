@@ -68,13 +68,14 @@ Intercepted call to real-time unsafe function `malloc` in real-time context!
 
 # Getting RTSan
 
-Until LLVM 20 is shipped with your OS, you'll need to download or build it
-yourself to use RealtimeSanitizer. The easiest way to experiment with RTSan is
-with our Docker image, for which more details can be found below.
+# Using Clang 20+ (recommended)
+
+The easiest way to use RTSan is by using Clang 20 or later. Once Clang 20 is installed
+on your system, compile and link with the `-fsanitize=realtime` flag.
 
 ## Docker
 
-The fastest way to try RealtimeSanitizer is to pull the [pre-built docker
+To experiment with RealtimeSanitizer before downloading Clang 20 pull the [pre-built docker
 image](https://hub.docker.com/repository/docker/realtimesanitizer/rtsan-clang/),
 which has `clang` (and other `llvm` tooling) with RTSan readily installed.
 
@@ -97,11 +98,6 @@ or CI environment:
 FROM realtimesanitizer/rtsan-clang:latest
 RUN apt-get update && apt-get install -y git cmake vim
 ```
-
-## Building LLVM 20 from source
-
-RTSan is now part of LLVM 20; please see the build instructions
-[here](https://llvm.org/docs/CMake.html) for more information.
 
 ## Windows
 
@@ -154,11 +150,24 @@ RTSan's algorithm consists of two parts that work together:
 
 The recommended way to use RTSan is to use it with LLVM 20 directly, as described elsewhere in this document. The rest of this section describes a hack which may or may not continue to work in the future.
 
-If you are in a position where you cannot use this compiler and instead rely on AppleClang or GCC, you can still use RTSan by directly linking in the runtime in directly.
+If you are in a position where you cannot use this compiler and instead rely on AppleClang, GCC, or an older version of Clang you can still use RTSan by directly linking in the runtime in directly.
 
-First, build the RTSan runtime by following the instructions in the [official docs](https://clang.llvm.org/docs/RealtimeSanitizer.html).
+## Getting the run-time libraries
 
-From there, find the RTSan runtime library and link it to your binary. This differs based on system:
+### Pre-built (recommended) 
+
+Pre-built versions of the runtime librarie can be downloaded from the [rtsan-libs](https://github.com/realtime-sanitizer/rtsan-libs/releases/latest)
+repository. Download the appropriate library for your architecture and link it to
+your binary.
+
+### Compiling from source
+
+You can otherwise build the RTSan runtime by following the instructions in the [official docs](https://clang.llvm.org/docs/RealtimeSanitizer.html).
+
+## Linking the RTSan runtime
+
+When you have built or downloaded the runtime library, simply link it to your binary. 
+This differs based on system:
 
 ```
 > cd $BUILD_DIR_MAC
