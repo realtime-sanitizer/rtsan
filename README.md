@@ -9,7 +9,7 @@ RTSan is part of the LLVM project, starting from v20.0.0. Like other popular
 sanitizers, it uses a lightweight dynamic library that can detect real-time
 unsafe system library calls. Calls to functions such as `malloc`, `free` and
 `pthread_mutex_lock` (along with anything else RTSan believes may have a
-nondeterministic execution time) will cause RTSan to error, but only if they
+non-deterministic execution time) will cause RTSan to error, but only if they
 are called within a real-time context, as defined by the user. Real-time
 contexts are defined by the user simply by marking functions with the
 `[[clang::nonblocking]]` attribute.
@@ -125,7 +125,7 @@ setting the `CC` and `CXX` environment variables or ii) passing the
 `CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER` options to CMake as arguments.
 
 Adding the compile and link flag `-fsanitize=realtime` can be done however
-works best for your project. One unintrusive option is to pass them as
+works best for your project. One unobtrusive option is to pass them as
 arguments to CMake:
 
 ```sh
@@ -156,7 +156,7 @@ If you are in a position where you cannot use this compiler and instead rely on 
 
 ### Pre-built (recommended) 
 
-Pre-built versions of the runtime librarie can be downloaded from the [rtsan-libs](https://github.com/realtime-sanitizer/rtsan-libs/releases/latest)
+Pre-built versions of the runtime library can be downloaded from the [rtsan-libs](https://github.com/realtime-sanitizer/rtsan-libs/releases/latest)
 repository. Download the appropriate library for your architecture and link it to
 your binary.
 
